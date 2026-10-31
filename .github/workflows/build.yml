@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -76,9 +76,18 @@ jobs:
           test -s android-launcher/app/build/outputs/apk/debug/app-debug.apk
           ls -lh android-launcher/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Publish APK for TV installation
-        uses: actions/upload-artifact@v4
-        with:
-          name: EymenTv-Android-TV-Launcher-APK
-          path: android-launcher/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+      - name: Publish installable APK in GitHub Releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp android-launcher/app/build/outputs/apk/debug/app-debug.apk dist/EymenTv-v1.0.0-test.apk
+          TAG="v1.0.0-test"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/EymenTv-v1.0.0-test.apk --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" dist/EymenTv-v1.0.0-test.apk --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "EYMEN TV 1.0 — TV Launcher Test APK" --notes "Android uyumlu TV'ler için deneme sürümü. Whale OS'nin APK veya HOME kullanımına izin vermesi garanti değildir. Önce normal uygulama olarak test edin." --prerelease
+          fi
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url,assets
