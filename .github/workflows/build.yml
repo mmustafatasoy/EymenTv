@@ -64,6 +64,28 @@ jobs:
           javac -d build/navtests src/com/eymen/uydukontrol/PageNav.java tests/PageNavTest.java
           java -cp build/navtests PageNavTest
 
+      - name: Render transparent TV logo and 8K PNG directly from vector source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet cairosvg pillow
+          mkdir -p dist
+          python3 - <<'PY'
+          import cairosvg
+          from PIL import Image
+          from pathlib import Path
+          src="eymen-uydu-kontrol/assets/brand_3d.svg"
+          runtime="eymen-uydu-kontrol/assets/brand_3d.png"
+          master="dist/EYMEN-TV-Logo-8K.png"
+          cairosvg.svg2png(url=src,write_to=runtime,output_width=1024,output_height=576)
+          cairosvg.svg2png(url=src,write_to=master,output_width=7680,output_height=4320)
+          for p,w,h in [(runtime,1024,576),(master,7680,4320)]:
+            with Image.open(p) as img:
+              img.load()
+              assert img.size==(w,h) and img.mode=="RGBA",(p,img.size,img.mode)
+            print("Logo image verified:",p,Path(p).stat().st_size)
+          PY
+
       - name: Build EYMEN TV channel APK
         shell: bash
         run: |
@@ -72,8 +94,8 @@ jobs:
           export TV_ANDROID_JAR="$ANDROID_HOME/platforms/android-33/android.jar"
           export TV_BUILD_TOOLS="$ANDROID_HOME/build-tools/33.0.2"
           bash build.sh
-          test -s build/EYMEN-TV-0.9.apk
-          ls -lh build/EYMEN-TV-0.9.apk
+          test -s build/EYMEN-TV-0.10.apk
+          ls -lh build/EYMEN-TV-0.10.apk
 
       - name: Commit channel source and remove temporary packed archive
         shell: bash
@@ -92,52 +114,25 @@ jobs:
       - name: Verify cross-TV input filtering and fallback
         run: python3 eymen-uydu-kontrol/tests/cross_tv_smoke_test.py
 
-      - name: Check and normalize branded WebP image
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          f=Path("eymen-uydu-kontrol/assets/brand_3d.webp")
-          data=f.read_bytes()
-          if data[:4]!=b"RIFF" or data[8:12]!=b"WEBP":
-              raise SystemExit("Branded logo is not a WebP image")
-          declared=int.from_bytes(data[4:8],"little")+8
-          if declared>len(data):
-              raise SystemExit("Incomplete WebP logo data")
-          if len(data)>declared:
-              f.write_bytes(data[:declared])
-              print("Trimmed",len(data)-declared,"extraneous bytes after WebP container")
-          print("Branded logo verified:",declared,"bytes")
-          PY
-          python3 -m pip install --quiet pillow
-          python3 - <<'PY'
-          from PIL import Image
-          with Image.open("eymen-uydu-kontrol/assets/brand_3d.webp") as logo:
-              logo.load()
-              print("Decoded brand logo:",logo.size,logo.mode)
-              if logo.width<70 or logo.height<35:
-                  raise SystemExit("Logo resolution too small")
-          PY
-
       - name: Test check-to-delete and continuously rotating transparent brand
         run: python3 eymen-uydu-kontrol/tests/brand_bulk_smoke_test.py
 
       - name: Verify hourly banner, actual photo and glossy logo assets
         run: python3 eymen-uydu-kontrol/tests/promo_smoke_test.py
 
-      - name: Publish EYMEN TV v0.9 hourly lower-third banner APK
+      - name: Publish EYMEN TV v0.10 hourly lower-third banner APK
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp eymen-uydu-kontrol/build/EYMEN-TV-0.9.apk dist/EYMEN-TV-Kanal-Listesi-v0.9.apk
-          test -s dist/EYMEN-TV-Kanal-Listesi-v0.9.apk
+          cp eymen-uydu-kontrol/build/EYMEN-TV-0.10.apk dist/EYMEN-TV-Kanal-Listesi-v0.10.apk
+          test -s dist/EYMEN-TV-Kanal-Listesi-v0.10.apk
           cat > /tmp/eymen-release-notes.md <<'NOTES'
-          # EYMEN TV — Uydu Kanal Listesi v0.9
+          # EYMEN TV — Uydu Kanal Listesi v0.10
 
+          - Gerçek şeffaf PNG logo, vektör kaynak üzerinden 1024×576 uygulama görseli ve 7680×4320 8K dosya olarak derlenir.
           - Toplu kanal seçme: ayrı onaylı, işaretleyerek silme ve silinenleri geri getirme
           - Dönen 3D EYMEN TV logosu, şeffaf zeminde dairesel site adresi etiketi
           - Vestel gibi DTVKit dışı TV'lerde cihazın izin verdiği kanal kayıtlarına erişim için otomatik TV giriş uyumluluğu
@@ -152,17 +147,18 @@ jobs:
           
           **Vestel ve diğer cihazlarda TV kanal sağlayıcısının erişime açık olması gerekir.** Android TV'nin TV Input Framework erişimi üreticiye göre değişir; gerçek görüntü/ses fiziksel TV'de test edilmelidir.
           NOTES
-          if ! gh release view uydu-tv-v0.9 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create uydu-tv-v0.9 dist/EYMEN-TV-Kanal-Listesi-v0.9.apk \
+          if ! gh release view uydu-tv-v0.10 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create uydu-tv-v0.10 dist/EYMEN-TV-Kanal-Listesi-v0.10.apk dist/EYMEN-TV-Logo-8K.png \
               --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "EYMEN TV — Uydu Kanal Listesi v0.9 • Saatlik Animasyonlu Reklam" \
+              --title "EYMEN TV — Uydu Kanal Listesi v0.10 • 3D Logo ve Toplu Silme" \
               --notes-file /tmp/eymen-release-notes.md \
               --latest
           else
-            echo "Release v0.5 already exists; preserving stable APK asset."
+            gh release upload uydu-tv-v0.10 dist/EYMEN-TV-Kanal-Listesi-v0.10.apk dist/EYMEN-TV-Logo-8K.png \
+              --repo "$GITHUB_REPOSITORY" --clobber
           fi
-          gh release view uydu-tv-v0.9 --repo "$GITHUB_REPOSITORY" --json url,assets
+          gh release view uydu-tv-v0.10 --repo "$GITHUB_REPOSITORY" --json url,assets
 
       - name: Remove obsolete launcher release and duplicate channel test release
         shell: bash
