@@ -1,32 +1,29 @@
 name: Build EYMEN Uydu TV 0.4 APK
 on:
   push:
-    branches:
-      - build/uydu-0.4-apk
-    paths:
-      - 'uydu-packages/eymen-tv-0.4.b64'
-      - '.github/workflows/build-uydu-apk.yml'
+    branches: [build/uydu-0.4-apk]
+    paths: ['uydu-packages/eymen-tv-0.4.b64', '.github/workflows/build-uydu-apk.yml']
+  pull_request:
+    branches: [main]
+    paths: ['uydu-packages/eymen-tv-0.4.b64', '.github/workflows/build-uydu-apk.yml']
   workflow_dispatch:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Java 17
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - name: Android SDK
-        uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v3
       - name: Install Android API and tools
         run: |
           yes | sdkmanager --licenses || true
           sdkmanager 'platforms;android-33' 'build-tools;33.0.2'
-      - name: Unpack approved EYMEN TV 0.4 source
+      - name: Unpack EYMEN TV source archive
         run: |
           base64 -d uydu-packages/eymen-tv-0.4.b64 > /tmp/eymen-tv-04.zip
           unzip -q /tmp/eymen-tv-04.zip
@@ -42,9 +39,18 @@ jobs:
           export TV_ANDROID_JAR="$ANDROID_HOME/platforms/android-33/android.jar"
           export TV_BUILD_TOOLS="$ANDROID_HOME/build-tools/33.0.2"
           bash build.sh
-      - name: Upload installable APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: EYMEN-TV-0.4-APK
           path: eymen-uydu-kontrol/build/EYMEN-TV-0.4.apk
           if-no-files-found: error
+      - name: Publish test APK release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view uydu-tv-v0.4-test >/dev/null 2>&1; then
+            gh release upload uydu-tv-v0.4-test eymen-uydu-kontrol/build/EYMEN-TV-0.4.apk --clobber
+          else
+            gh release create uydu-tv-v0.4-test eymen-uydu-kontrol/build/EYMEN-TV-0.4.apk --target "$GITHUB_SHA" --title "EYMEN TV Uydu 0.4 (test APK)" --notes "Whale OS / Android TV test version. 10-item paging, editable channels, custom logos and animated branding. DTVKit audio requires on-device verification." --prerelease --latest=false
+          fi
