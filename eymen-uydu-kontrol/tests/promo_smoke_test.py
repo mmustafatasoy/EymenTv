@@ -27,6 +27,6 @@ logo=p/'assets/promo_logo.jpg'
 for filename,minimum in [(family,15000),(logo,8000)]:
  data=filename.read_bytes()
  assert len(data)>minimum,(filename.name,'too small or placeholder photo',len(data))
- assert data[:3]==b'\\xff\\xd8\\xff',(filename.name,'JPEG format not valid')
+ assert data[:3]==bytes([255,216,255]),(filename.name,'JPEG format not valid')
 print('Full-resolution family photo and original EYMEN TV logo verified',family.stat().st_size,logo.stat().st_size)
 print('Hourly lower-third promo smoke test passed:',len(tests),'checks')
