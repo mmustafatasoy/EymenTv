@@ -72,8 +72,8 @@ jobs:
           export TV_ANDROID_JAR="$ANDROID_HOME/platforms/android-33/android.jar"
           export TV_BUILD_TOOLS="$ANDROID_HOME/build-tools/33.0.2"
           bash build.sh
-          test -s build/EYMEN-TV-0.4.apk
-          ls -lh build/EYMEN-TV-0.4.apk
+          test -s build/EYMEN-TV-0.5.apk
+          ls -lh build/EYMEN-TV-0.5.apk
 
       - name: Commit channel source and remove temporary packed archive
         shell: bash
@@ -89,42 +89,41 @@ jobs:
             git push origin HEAD:main
           fi
 
-      - name: Publish the existing verified channel APK under a dedicated release
+      - name: Verify hourly banner timing and animation code
+        run: python3 eymen-uydu-kontrol/tests/promo_smoke_test.py
+
+      - name: Publish EYMEN TV v0.5 hourly lower-third banner APK
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
-          if gh release view uydu-tv-v0.4-test --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release download uydu-tv-v0.4-test --repo "$GITHUB_REPOSITORY" --pattern EYMEN-TV-0.4.apk --dir dist
-            mv dist/EYMEN-TV-0.4.apk dist/EYMEN-TV-Kanal-Listesi-v0.4.apk
-          else
-            cp eymen-uydu-kontrol/build/EYMEN-TV-0.4.apk dist/EYMEN-TV-Kanal-Listesi-v0.4.apk
-          fi
-          test -s dist/EYMEN-TV-Kanal-Listesi-v0.4.apk
+          cp eymen-uydu-kontrol/build/EYMEN-TV-0.5.apk dist/EYMEN-TV-Kanal-Listesi-v0.5.apk
+          test -s dist/EYMEN-TV-Kanal-Listesi-v0.5.apk
           cat > /tmp/eymen-release-notes.md <<'NOTES'
-          # EYMEN TV — Uydu Kanal Listesi v0.4
+          # EYMEN TV — Uydu Kanal Listesi v0.5
+
+          - Önceki özellikler korunmuştur: 10 kanallık sayfalar, kanal düzenleme, logolar ve kumanda
+          - Yayın sırasında **alt bantta** animasyonlu EYMEN TV tanıtımı
+          - Görsel önce görünür; web adresi, telefon, isim ve en son EYMEN TV logosu sırayla açılır
+          - Uygulama yayında ve menü kapalıyken **bir saatte bir**, **15 saniye** gösterilir; TV kapatılıp açılsa da son gösterim zamanı hatırlanır
+          - Uygulama ayarlarında **Reklamı şimdi göster (test)** seçeneği bulunur
+          - Yayın sesi kapatılmaz, video oynatımı durdurulmaz
           
-          Bu APK **TV ana ekranı/launcher değildir**. Uydu kanal listesi projesinin Android uyumlu cihazlar için test derlemesidir.
-          
-          - Kumandayla 10'lu kanal sayfaları arasında gezinme
-          - Kanal listesini ve logoları yönetmeye yönelik arayüz
-          - Şeffaf kanal menüsü ve EYMEN TV görsel tasarımı
-          
-          **Sınırlama:** Whale OS / DTVKit uydu tunerine erişim, gerçek görüntü ve ses cihazda ayrıca test edilmelidir. Uygulamayı varsayılan HOME olarak seçmeyin. Eski TV yazılımını veya EYMENkids'i silmeyin.
+          **Whale OS cihazında tuner ve ses desteği hâlâ fiziksel TV testine bağlıdır.**
           NOTES
-          if ! gh release view uydu-tv-v0.4 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create uydu-tv-v0.4 dist/EYMEN-TV-Kanal-Listesi-v0.4.apk \
+          if ! gh release view uydu-tv-v0.5 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create uydu-tv-v0.5 dist/EYMEN-TV-Kanal-Listesi-v0.5.apk \
               --repo "$GITHUB_REPOSITORY" \
-              --target "$(git rev-parse HEAD)" \
-              --title "EYMEN TV — Uydu Kanal Listesi v0.4" \
+              --target "$GITHUB_SHA" \
+              --title "EYMEN TV — Uydu Kanal Listesi v0.5 • Saatlik Animasyonlu Reklam" \
               --notes-file /tmp/eymen-release-notes.md \
               --latest
           else
-            echo "Canonical channel release already exists. Preserve its APK signing."
+            echo "Release v0.5 already exists; preserving stable APK asset."
           fi
-          gh release view uydu-tv-v0.4 --repo "$GITHUB_REPOSITORY" --json url,assets
+          gh release view uydu-tv-v0.5 --repo "$GITHUB_REPOSITORY" --json url,assets
 
       - name: Remove obsolete launcher release and duplicate channel test release
         shell: bash
