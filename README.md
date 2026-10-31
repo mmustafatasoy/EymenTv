@@ -2,18 +2,21 @@
 
 Görselleri onaylanan **EYMEN TV** ana ekranı, uygulamalar ve ayarlar tasarımını kullanan özel TV başlatıcısı. EYMENkids uygulamasından **ayrı** bir projedir.
 
-## APK indirme
+## APK indirme — GitHub Releases
 
-**[GitHub Actions → Build EYMEN TV APK](https://github.com/mmustafatasoy/EymenTv/actions/workflows/build.yml)**
+**[⬇ EYMEN TV v1.0 Test APK indir (11,4 MB)](https://github.com/mmustafatasoy/EymenTv/releases/download/v1.0.0-test/EymenTv-v1.0.0-test.apk)**
 
-1. Yukarıdaki Actions bağlantısını aç.
-2. En üstteki **Build EYMEN TV APK** çalıştırmasını seç; yeşil **success** olmasını kontrol et.
-3. Sayfanın altında **Artifacts → EymenTv-Android-TV-Launcher-APK** dosyasını indir.
-4. İndirilen arşivden `app-debug.apk` dosyasını çıkar, USB belleğe aktar.
-5. Televizyondaki dosya yöneticisinden APK'yı aç ve TV izin veriyorsa yükle.
-6. EYMEN TV'yi önce **normal uygulama** olarak aç; kumanda yön, OK, Geri ve uygulama açmayı test et.
+**[📦 v1.0.0-test Releases sayfası](https://github.com/mmustafatasoy/EymenTv/releases/tag/v1.0.0-test)**
 
-**ZIP kaynak dosyasını elle yüklemene gerek yok.** Onaylanan tasarımları içeren HTML5 ekran, Git deposunda 13 parça hâlinde tutuluyor. GitHub Actions derleme sırasında bu parçaları birleştirip doğrudan APK içerisine yerleştirir. Aynı HTML5 sayfa Whale TV geliştirici ortamında da kullanılabilir.
+1. Yukarıdaki APK bağlantısını açarak `EymenTv-v1.0.0-test.apk` dosyasını indir.
+2. APK'yı FAT32 biçimli USB belleğe kopyala.
+3. Televizyonun dosya yöneticisinden APK dosyasını aç. Cihaz dışarıdan uygulama kurmayı destekliyorsa kurulum ekranı açılır.
+4. EYMEN TV'yi önce **normal uygulama** olarak başlat ve kumanda yön/OK/Geri tuşlarını test et.
+5. Yalnızca TV izin veriyorsa `Ayarlar → Varsayılan uygulamalar → Ana ekran` veya cihazın sunduğu HOME seçim ekranında EYMEN TV'yi seç.
+
+**Derleme yeşil başarılı:** [GitHub Actions — Build EYMEN TV APK](https://github.com/mmustafatasoy/EymenTv/actions/workflows/build.yml).
+
+APK, GitHub Actions depolama kotasından bağımsız olması için doğrudan **Releases** bölümüne yüklenir. **Kaynak ZIP yüklemen gerekmez**: Referans ekranların tamamı bu depoda saklanır ve derleme sırasında birleştirilir.
 
 ## Tasarım ve özellikler
 
