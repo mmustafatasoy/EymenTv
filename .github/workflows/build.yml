@@ -92,6 +92,34 @@ jobs:
       - name: Verify cross-TV input filtering and fallback
         run: python3 eymen-uydu-kontrol/tests/cross_tv_smoke_test.py
 
+      - name: Check and normalize branded WebP image
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          f=Path("eymen-uydu-kontrol/assets/brand_3d.webp")
+          data=f.read_bytes()
+          if data[:4]!=b"RIFF" or data[8:12]!=b"WEBP":
+              raise SystemExit("Branded logo is not a WebP image")
+          declared=int.from_bytes(data[4:8],"little")+8
+          if declared>len(data):
+              raise SystemExit("Incomplete WebP logo data")
+          if len(data)>declared:
+              f.write_bytes(data[:declared])
+              print("Trimmed",len(data)-declared,"extraneous bytes after WebP container")
+          print("Branded logo verified:",declared,"bytes")
+          PY
+          python3 -m pip install --quiet pillow
+          python3 - <<'PY'
+          from PIL import Image
+          with Image.open("eymen-uydu-kontrol/assets/brand_3d.webp") as logo:
+              logo.load()
+              print("Decoded brand logo:",logo.size,logo.mode)
+              if logo.width<70 or logo.height<35:
+                  raise SystemExit("Logo resolution too small")
+          PY
+
       - name: Test check-to-delete and continuously rotating transparent brand
         run: python3 eymen-uydu-kontrol/tests/brand_bulk_smoke_test.py
 
