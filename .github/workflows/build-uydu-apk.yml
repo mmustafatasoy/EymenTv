@@ -18,11 +18,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
       - name: Install Android API and tools
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager 'platforms;android-33' 'build-tools;33.0.2'
+          : "${ANDROID_HOME:=/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses || true
+          "$SDKMANAGER" 'platforms;android-33' 'build-tools;33.0.2'
       - name: Unpack EYMEN TV source archive
         run: |
           base64 -d uydu-packages/eymen-tv-0.4.b64 > /tmp/eymen-tv-04.zip
