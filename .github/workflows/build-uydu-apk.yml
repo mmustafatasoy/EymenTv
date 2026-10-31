@@ -41,11 +41,6 @@ jobs:
           export TV_ANDROID_JAR="$ANDROID_HOME/platforms/android-33/android.jar"
           export TV_BUILD_TOOLS="$ANDROID_HOME/build-tools/33.0.2"
           bash build.sh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: EYMEN-TV-0.4-APK
-          path: eymen-uydu-kontrol/build/EYMEN-TV-0.4.apk
-          if-no-files-found: error
       - name: Publish test APK release
         if: github.event_name == 'push'
         env:
