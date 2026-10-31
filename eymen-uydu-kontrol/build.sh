@@ -17,6 +17,6 @@ import zipfile
 with zipfile.ZipFile('build/unsigned.apk','a') as z:z.write('build/classes.dex','classes.dex')
 PY
 "$TV_BUILD_TOOLS/zipalign" -f 4 build/unsigned.apk build/aligned.apk
-"$TV_BUILD_TOOLS/apksigner" sign --ks signing/development.jks --ks-pass pass:android --out build/EYMEN-TV-0.6.apk build/aligned.apk
-"$TV_BUILD_TOOLS/apksigner" verify --verbose build/EYMEN-TV-0.6.apk
-"$TV_BUILD_TOOLS/zipalign" -c 4 build/EYMEN-TV-0.6.apk
+"$TV_BUILD_TOOLS/apksigner" sign --ks signing/development.jks --ks-pass pass:android --out build/EYMEN-TV-0.7.apk build/aligned.apk
+"$TV_BUILD_TOOLS/apksigner" verify --verbose build/EYMEN-TV-0.7.apk
+"$TV_BUILD_TOOLS/zipalign" -c 4 build/EYMEN-TV-0.7.apk

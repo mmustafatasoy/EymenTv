@@ -111,45 +111,96 @@ public class PlayerActivity extends Activity {
   int count=Math.min(s.length(),Math.max(0,(int)Math.ceil(s.length()*progress)));
   text(c,s.substring(0,count),x,y,size,color,true);
  }
+
+ private void promoBar(Canvas c,float l,float t,float r,float b,int[] colors,float amount){
+  if(amount<=0)return;
+  c.save();c.saveLayerAlpha(l-8,t-6,r+8,b+7,(int)(255*Math.min(1f,amount)));
+  p.setStyle(Paint.Style.FILL);p.setShader(new LinearGradient(l,t,r,b,colors,null,Shader.TileMode.CLAMP));
+  c.drawRoundRect(l,t,r,b,16,16,p);p.setShader(null);
+  p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1.8f);p.setColor(0x99ffffff);
+  c.drawRoundRect(l+1,t+1,r-1,b-1,15,15,p);
+  p.setStyle(Paint.Style.FILL);
+  p.setShader(new LinearGradient(l,t,l,t+17,new int[]{0x77ffffff,0x00ffffff},null,Shader.TileMode.CLAMP));
+  c.drawRoundRect(l+5,t+3,r-5,t+18,9,9,p);p.setShader(null);
+  c.restore();
+ }
+ private void promoLine(Canvas c,Path path,int color,float stroke){
+  p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(stroke+5);p.setColor((color&0x00ffffff)|0x33000000);c.drawPath(path,p);
+  p.setStrokeWidth(stroke);p.setColor(color);c.drawPath(path,p);p.setStyle(Paint.Style.FILL);
+ }
  private void drawPromo(Canvas c){
   long elapsed=SystemClock.uptimeMillis()-promoStartedUptime;
   if(elapsed<0||elapsed>=PROMO_DURATION_MS)return;
-  float in=entrance(elapsed,0,750),out=Math.max(0f,Math.min(1f,(PROMO_DURATION_MS-elapsed)/850f));
-  c.save();c.clipRect(0,530,1280,720);c.translate(0,(1f-in)*195f);
-  c.saveLayerAlpha(0,525,1280,720,(int)(255*out));
+  float opening=entrance(elapsed,0,880),closing=entrance(PROMO_DURATION_MS-elapsed,0,850);
+  c.save();c.clipRect(0,490,1280,720);c.translate(0,(1f-opening)*235f);
+  c.saveLayerAlpha(0,490,1280,720,(int)(255*closing));
   p.setStyle(Paint.Style.FILL);
-  p.setShader(new LinearGradient(0,540,1280,720,new int[]{0xff00336c,0xff051a52,0xffad0c38},new float[]{0f,.62f,1f},Shader.TileMode.CLAMP));
-  c.drawRect(0,542,1280,720,p);p.setShader(null);
-  if(promoFamily!=null){p.setShader(null);p.setStyle(Paint.Style.FILL);p.setAlpha(255);c.drawBitmap(promoFamily,null,new RectF(0,543,456,716),p);p.setAlpha(255);}
-  p.setShader(new LinearGradient(320,570,535,570,0x00051a52,0xff051a52,Shader.TileMode.CLAMP));
-  c.drawRect(318,543,535,720,p);p.setShader(null);
-  p.setColor(0xffffca55);c.drawRect(0,540,1280,544,p);
-  p.setColor(0xff45d6ff);c.drawRect(0,715,1280,719,p);
-  // Fotoğraf görünür, metin blokları birbiri ardına açılır.
-  if(elapsed>950){
-   p.setColor(0xffb6092d);c.drawRoundRect(470,555,984,601,13,13,p);
-   p.setColor(0xff063b91);c.drawRoundRect(470,606,984,650,13,13,p);
-   p.setColor(0xffe4b744);c.drawRoundRect(470,655,984,704,13,13,p);
+  p.setShader(new LinearGradient(0,495,1280,720,
+    new int[]{0xff021d58,0xff041449,0xff0d1b60,0xff960f2e},
+    new float[]{0f,.34f,.73f,1f},Shader.TileMode.CLAMP));
+  c.drawRect(0,499,1280,720,p);p.setShader(null);
+
+  // Animated neon ribbons: premium TV broadcast lower-third, not a floating card.
+  Path blue=new Path();blue.moveTo(0,590);blue.cubicTo(220,512,370,548,545,562);
+  blue.cubicTo(770,591,960,494,1280,531);promoLine(c,blue,0xff17bdff,2.8f);
+  Path gold=new Path();gold.moveTo(0,508);gold.cubicTo(140,483,301,501,420,544);
+  gold.cubicTo(650,579,1010,540,1280,503);promoLine(c,gold,0xffffc85a,2.8f);
+  Path red=new Path();red.moveTo(0,708);red.cubicTo(290,736,570,693,790,707);
+  red.cubicTo(1000,734,1150,687,1280,700);promoLine(c,red,0xffff365a,3.5f);
+
+  // Original approved family photograph: left side fills its own spotlight.
+  if(promoFamily!=null){
+   float reveal=entrance(elapsed,150,1000);
+   c.save();c.clipRect(0,503,456*reveal,719);
+   p.setColor(Color.WHITE);p.setAlpha(255);
+   c.drawBitmap(promoFamily,null,new RectF(-4,507,457,717),p);c.restore();
   }
-  promoTyping(c,"www.atasoyyazılım.com",488,587,24,Color.WHITE,elapsed,1450,2800);
-  promoTyping(c,"İletişim: 0531 221 89 65",488,638,22,Color.WHITE,elapsed,3850,2350);
-  promoTyping(c,"MUHAMMET ATASOY",488,687,27,0xff072552,elapsed,6200,1950);
-  float logo=entrance(elapsed,8200,1300);
-  if(logo>0){
-   c.save();c.scale(.88f+.12f*logo,.88f+.12f*logo,1136,622);
-   c.saveLayerAlpha(985,554,1280,706,(int)(255*logo));
-   p.setColor(0xff04245c);c.drawRoundRect(985,554,1280,704,17,17,p);
+  p.setShader(new LinearGradient(330,540,480,540,
+    new int[]{0x00051a50,0xff06194e},null,Shader.TileMode.CLAMP));
+  c.drawRect(330,504,480,717,p);p.setShader(null);
+  p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(3f);p.setColor(0xffffcc55);
+  c.drawArc(new RectF(-45,501,467,751),205,236,false,p);
+  p.setStrokeWidth(1.7f);p.setColor(0xff55dfff);
+  c.drawArc(new RectF(-31,505,468,741),245,135,false,p);p.setStyle(Paint.Style.FILL);
+
+  // Three rows unfold in order with typewriter text, then real glossy logo.
+  float url=entrance(elapsed,1050,650);
+  promoBar(c,464,548,982,597,new int[]{0xffd71945,0xff9b002c,0xfff03346},url);
+  if(url>0)promoTyping(c,"www.atasoyyazılım.com",484,580,26,Color.WHITE,elapsed,1550,2050);
+  float phone=entrance(elapsed,3400,550);
+  promoBar(c,464,604,982,650,new int[]{0xff098be1,0xff063d9c,0xff1165cd},phone);
+  if(phone>0)promoTyping(c,"İletişim: 0531 221 89 65",484,636,24,Color.WHITE,elapsed,3950,1980);
+  float name=entrance(elapsed,6050,550);
+  promoBar(c,464,657,982,707,new int[]{0xffffe893,0xffffbb43,0xffef9d20},name);
+  if(name>0)promoTyping(c,"MUHAMMET ATASOY",484,692,29,0xff092357,elapsed,6650,1950);
+
+  float shown=entrance(elapsed,8500,1350);
+  if(shown>0){
+   c.save();c.scale(.84f+.16f*shown,.84f+.16f*shown,1129,620);
+   c.saveLayerAlpha(986,550,1279,708,(int)(255*shown));
+   p.setColor(0xff07184d);c.drawRoundRect(987,550,1278,707,17,17,p);
+   p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(2f);p.setColor(0xffffc54d);
+   c.drawRoundRect(989,551,1276,705,16,16,p);p.setStyle(Paint.Style.FILL);
    if(promoLogo!=null){
-    p.setAlpha(255);p.setStyle(Paint.Style.FILL);
-    c.drawBitmap(promoLogo,null,new RectF(992,561,1275,655),p);
-   }else{
-    p.setColor(0xff125cba);c.drawRoundRect(993,569,1272,659,13,13,p);
-    text(c,"EYMEN TV",1005,623,35,Color.WHITE,true);
-   }
-   p.setColor(0xffffd86d);c.drawRoundRect(994,665,1273,697,11,11,p);
-   text(c,"Eymen TV ile dijital çözümler",1005,688,14,0xff061b54,true);
+    p.setAlpha(255);c.drawBitmap(promoLogo,null,new RectF(995,558,1272,652),p);
+   }else{text(c,"EYMEN TV",1010,633,34,Color.WHITE,true);}
+   p.setShader(new LinearGradient(995,665,1272,701,
+     new int[]{0xffffefaa,0xffffb83d,0xffffeb89},null,Shader.TileMode.CLAMP));
+   c.drawRoundRect(995,662,1272,700,11,11,p);p.setShader(null);
+   text(c,"Eymen TV ile dijital çözümler",1005,687,14,0xff091f52,true);
    c.restore();c.restore();
   }
+
+  // A restrained moving specular highlight completes the broadcast look.
+  if(elapsed>1000&&elapsed<PROMO_DURATION_MS-800){
+   float sweep=((elapsed-1000)%4200)/4200f;
+   float x=-160+1600*sweep;
+   p.setShader(new LinearGradient(x-95,510,x+95,675,
+     new int[]{0x00ffffff,0x55ffffff,0x00ffffff},null,Shader.TileMode.CLAMP));
+   c.drawRect(Math.max(0,x-95),505,Math.min(1280,x+95),713,p);p.setShader(null);
+  }
+  p.setColor(0xffffd25b);c.drawRect(0,500,1280,503,p);
+  p.setColor(0xff24c3ff);c.drawRect(0,716,1280,720,p);
   c.restore();c.restore();
  }
  @Override protected void onDraw(Canvas c){super.onDraw(c);c.save();c.scale(getWidth()/1280f,getHeight()/720f);int white=Color.WHITE,muted=0xffbdcbd6,cyan=0xff35e6ee;

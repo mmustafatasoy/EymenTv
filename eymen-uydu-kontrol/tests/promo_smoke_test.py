@@ -9,7 +9,7 @@ tests={
  'shown after picture':'promoTyping(c,"www.atasoyyazılım.com"',
  'phone':'0531 221 89 65',
  'name':'MUHAMMET ATASOY',
- 'logo last':'entrance(elapsed,8200,1300)',
+ 'logo last':'entrance(elapsed,8500,1350)',
  'visible only while viewing':'if(current==null||menu)return;',
  'persist last shown':'prefs.edit().putLong(PROMO_LAST_KEY',
  'preview menu':'Reklamı şimdi göster (test)',
@@ -18,10 +18,13 @@ tests={
  'logo bitmap decoded':'promoLogo=BitmapFactory.decodeStream(picture)',
  'bitmap drawn instead of fake text':'c.drawBitmap(promoLogo',
  'display at end of overlay':'if(promoStartedUptime>0)drawPromo(c)',
- 'version 0.6':'android:versionName="0.6"'
+ 'neon broadcast waves':'promoLine(c,blue',
+ 'golden premium bars':'promoBar(c,464,657,982,707',
+ 'moving reflection':'moving specular highlight',
+ 'version 0.7':'android:versionName="0.7"'
 }
 for name,token in tests.items():
- assert token in (manifest if name=='version 0.6' else s),name
+ assert token in (manifest if name=='version 0.7' else s),name
 family=p/'assets/promo_family.jpg'
 logo=p/'assets/promo_logo.jpg'
 for filename,minimum in [(family,15000),(logo,8000)]:

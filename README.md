@@ -4,7 +4,7 @@
 
 ## 📥 APK indir
 
-**[⬇ EYMEN TV v0.6 — Saatlik Animasyonlu Alt Bant Reklamı APK](https://github.com/mmustafatasoy/EymenTv/releases/download/uydu-tv-v0.6/EYMEN-TV-Kanal-Listesi-v0.6.apk)**
+**[⬇ EYMEN TV v0.7 — Saatlik Animasyonlu Alt Bant Reklamı APK](https://github.com/mmustafatasoy/EymenTv/releases/download/uydu-tv-v0.7/EYMEN-TV-Kanal-Listesi-v0.7.apk)**
 
 [GitHub Releases — Kanal Listesi](https://github.com/mmustafatasoy/EymenTv/releases)
 
@@ -19,13 +19,14 @@
 - Bu APK **Android uyumlu TV'ler için test sürümüdür**. Whale OS üzerinde APK kurulum ve sistem kanal uygulamasına erişim ayrıca test gerektirir.
 - EYMENkids bu depodan bağımsızdır ve değiştirilmez.
 
-## Yayın içi reklam — v0.6
+## Yayın içi reklam — v0.7
 
 - Reklam **yayının alt kısmında tam genişlikte**, klasik TV alt bant reklamı gibi görünür; sağ altta bağımsız bir kutu değildir.
-- Aile fotoğrafı önce alttan kayarak açılır; ardından **www.atasoyyazılım.com**, **0531 221 89 65**, **MUHAMMET ATASOY** yazıları sıralı şekilde belirir, en son EYMEN TV logosu animasyonla gelir.
+- Aile fotoğrafı altın renkli ışık yayıyla açılır, kırmızı/mavi neon prodüksiyon çizgileri hareket eder; ardından **www.atasoyyazılım.com**, **0531 221 89 65**, **MUHAMMET ATASOY** yazıları sıralı şekilde belirir, en son EYMEN TV logosu animasyonla gelir.
 - **Yalnızca uygulama yayını açık ve kanal listesi kapalı iken**, son gösterimden **en az 60 dakika** sonra görünür ve **15 saniye** sürer.
 - Zamanlamanın uygulama kapatılıp açıldığında da korunması için SharedPreferences kullanılır.
 - İlk otomatik gösterim ilk çalıştırmadan 60 dakika sonradır; **Ayarlar → Reklamı şimdi göster (test)** ile hemen test edilebilir.
+- **Yalnızca reklam görselliği değişmiştir; kanal menüsü, kumanda davranışı, kanal logoları ve kanal oynatma kodları aynı kalmıştır.**
 - Fotoğraf `eymen-uydu-kontrol/assets/promo_family.jpg` dosyasındadır. Artık 490×205 boyutlu onaylanan aile fotoğrafı ve gerçek parlak EYMEN TV logosu (`assets/promo_logo.jpg`, 390×110) APK içinde bulunur. İlk düşük çözünürlüklü yer tutucu kaldırılmıştır.
 - Bu bant TV işletim sisteminin tüm kanallarında değil **EYMEN TV uygulamasında açılan yayınlarda** çalışır. Sistem yayın katmanında ayrı uygulamalara reklam bindirebilme garanti edilmez.
 
