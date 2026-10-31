@@ -1,0 +1,50 @@
+name: Build EYMEN Uydu TV 0.4 APK
+on:
+  push:
+    branches:
+      - build/uydu-0.4-apk
+    paths:
+      - 'uydu-packages/eymen-tv-0.4.b64'
+      - '.github/workflows/build-uydu-apk.yml'
+  workflow_dispatch:
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android API and tools
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager 'platforms;android-33' 'build-tools;33.0.2'
+      - name: Unpack approved EYMEN TV 0.4 source
+        run: |
+          base64 -d uydu-packages/eymen-tv-0.4.b64 > /tmp/eymen-tv-04.zip
+          unzip -q /tmp/eymen-tv-04.zip
+      - name: Test channel navigation
+        run: |
+          cd eymen-uydu-kontrol
+          mkdir -p build/navtests
+          javac -d build/navtests src/com/eymen/uydukontrol/PageNav.java tests/PageNavTest.java
+          java -cp build/navtests PageNavTest
+      - name: Build and verify APK
+        run: |
+          cd eymen-uydu-kontrol
+          export TV_ANDROID_JAR="$ANDROID_HOME/platforms/android-33/android.jar"
+          export TV_BUILD_TOOLS="$ANDROID_HOME/build-tools/33.0.2"
+          bash build.sh
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: EYMEN-TV-0.4-APK
+          path: eymen-uydu-kontrol/build/EYMEN-TV-0.4.apk
+          if-no-files-found: error
