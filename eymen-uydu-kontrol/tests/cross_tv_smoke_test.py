@@ -15,7 +15,7 @@ must=[
 ]
 for token in must: assert token in s,token
 assert 'if(input!=null&&input.startsWith("com.droidlogic.dtvkit.inputsource/"))' not in s
-assert 'android:versionCode="9" android:versionName="0.8"' in manifest
+assert 'android:versionCode="10" android:versionName="0.9"' in manifest
 for preserved in [
  'PageNav.jump(selected,visible.size()',
  'for(int k=0;k<10&&start+k<visible.size();k++)',
