@@ -21,10 +21,10 @@ tests={
  'neon broadcast waves':'promoLine(c,blue',
  'golden premium bars':'promoBar(c,464,657,982,707',
  'moving reflection':'moving specular highlight',
- 'version 0.7':'android:versionName="0.7"'
+ 'version 0.8':'android:versionName="0.8"'
 }
 for name,token in tests.items():
- assert token in (manifest if name=='version 0.7' else s),name
+ assert token in (manifest if name=='version 0.8' else s),name
 family=p/'assets/promo_family.jpg'
 logo=p/'assets/promo_logo.jpg'
 for filename,minimum in [(family,15000),(logo,8000)]:
