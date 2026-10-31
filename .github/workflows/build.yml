@@ -140,3 +140,14 @@ jobs:
             gh release delete uydu-tv-v0.4-test --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
             echo "Duplicate channel test release removed after canonical publication."
           fi
+
+      - name: Remove obsolete integration branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/$GITHUB_REPOSITORY/branches/build%2Fuydu-0.4-apk" >/dev/null 2>&1; then
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/build/uydu-0.4-apk"
+            echo "Obsolete integration branch deleted. Only the channel application remains on main."
+          fi
