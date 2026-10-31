@@ -1,47 +1,39 @@
-# EYMEN TV — Whale OS / Android TV Başlatıcısı
+# EYMEN TV — Whale OS / Android TV Launcher
 
-**Bu proje EYMENkids'ten ayrıdır.** Onaylanan ana ekran, uygulamalar ve ayarlar görselleriyle, düşen **E Y M E N  T V** harflerinden oluşan açılış animasyonunu ve kumanda yön/OK/Geri kontrolünü içerir.
+Görselleri onaylanan **EYMEN TV** ana ekranı, uygulamalar ve ayarlar tasarımını kullanan özel TV başlatıcısı. EYMENkids uygulamasından **ayrı** bir projedir.
 
-## Kurulum — ilk APK'yı oluşturma (telefondan da yapılabilir)
+## APK indirme
 
-Bu depo özel (Private) olarak açıldı ve APK oluşturma iş akışı eklendi. **Tek gereken adım: Tam kaynak ZIP dosyasını deponun ana dizinine yüklemek.**
+**[GitHub Actions → Build EYMEN TV APK](https://github.com/mmustafatasoy/EymenTv/actions/workflows/build.yml)**
 
-1. ChatGPT'de hazırlanmış `EYMEN-TV-WhaleOS-v1.0-KAYNAK-PROJE.zip` dosyasını indir. **ZIP'i açma ve adını değiştirme.**
-2. GitHub'da [Add file → Upload files](https://github.com/mmustafatasoy/EymenTv/upload/main) bölümünü aç.
-3. ZIP'i seç ve **Commit changes** düğmesine bas. GitHub tek bir dosya olarak yükler; bütün tasarımlar, kaynak kodlar ve grafikler arşivdedir.
-4. [Actions](https://github.com/mmustafatasoy/EymenTv/actions/workflows/build.yml) bölümünden `EYMEN TV - Whale OS and Android Launcher` iş akışını aç. Dosya yüklemesiyle otomatik başlar; gerekirse **Run workflow** kullan.
-5. İşlem yeşil olursa çalıştırmanın altındaki **Artifacts → EymenTv-Android-TV-Launcher-APK** dosyasını indir.
-6. İnen ZIP'i açarak `app-debug.apk` dosyasını çıkar, FAT32 USB belleğe kopyala ve TV'nin dosya yöneticisinden açmayı dene.
+1. Yukarıdaki Actions bağlantısını aç.
+2. En üstteki **Build EYMEN TV APK** çalıştırmasını seç; yeşil **success** olmasını kontrol et.
+3. Sayfanın altında **Artifacts → EymenTv-Android-TV-Launcher-APK** dosyasını indir.
+4. İndirilen arşivden `app-debug.apk` dosyasını çıkar, USB belleğe aktar.
+5. Televizyondaki dosya yöneticisinden APK'yı aç ve TV izin veriyorsa yükle.
+6. EYMEN TV'yi önce **normal uygulama** olarak aç; kumanda yön, OK, Geri ve uygulama açmayı test et.
 
-**Lütfen önce EYMENkids'i veya TV'nin orijinal ana ekranını kaldırma.** EYMEN TV'yi normal uygulama olarak dene; izin verilirse sonradan varsayılan HOME olarak seçebilirsin.
+**ZIP kaynak dosyasını elle yüklemene gerek yok.** Onaylanan tasarımları içeren HTML5 ekran, Git deposunda 13 parça hâlinde tutuluyor. GitHub Actions derleme sırasında bu parçaları birleştirip doğrudan APK içerisine yerleştirir. Aynı HTML5 sayfa Whale TV geliştirici ortamında da kullanılabilir.
 
-## Gerçekte hangi sürüm çalışır?
+## Tasarım ve özellikler
 
-| Özellik | Android uyumlu TV APK | Whale OS HTML5 |
-|---|---|---|
-| Birebir onaylanan ekran görselleri | Evet, APK içinde | Evet, HTTPS yayında |
-| EYMEN TV düşen harf açılışı | Uygulama başlarken | Uygulama başlarken |
-| Yön / OK / Geri | Evet, cihaz testi gerekli | Evet, cihaz testi gerekli |
-| Kurulu uygulamaları listeleme/açma | Android izin verirse | Üretici entegrasyonu gerekir |
-| Ana ekran (HOME) olarak seçme | Android izin verirse | Standart HTML5 izniyle mümkün değil |
-| TV güç açılış logosunu değiştirme | Hayır | Hayır |
-| HDMI görüntüsü / TV panel ayarları | Üretici API iznine bağlı | Üretici API iznine bağlı |
+- Düşen harflerle **EYMEN TV** animasyonu (uygulama açıldığında)
+- Referans görsellerin aynısını içeren ana sayfa, uygulamalar ve ayarlar
+- Kumanda yön / OK / Geri tuşlarıyla gezinme
+- Android uyumlu cihazda kurulu uygulamaları listeleme, görsel kartlara eşleştirme, favoriler
+- Uygulama içi parlaklık, kontrast ve görünüm tercihleri (TV panel ayarları değildir)
+- Android izin verirse HOME (ana ekran) seçimi
 
-## Tasarım ve kaynak içerik
+## Teknik kaynaklar
 
-Kaynaktaki `assets/home.png`, `assets/apps.png`, `assets/settings.png` görselleri referans olarak onaylanan ekranlardır; üstlerindeki görünmez tuş seçim alanları JavaScript ile kontrol edilir. Görseller demo/temsili film afişleri içerir; gerçek yayın hakları veya video akışları bu projeyle sağlanmaz. Uygulama geliştirici özelleştirmesi dışında TV sistem bölümünü değiştirmez.
+- `web-parts/part-00.txt` — `part-12.txt`: Onaylanan ekranların PNG verilerini, CSS ve JavaScript'i içeren tam HTML5 arayüz
+- `android-launcher/`: Android TV uygulama kabuğu, Java köprüsü ve derleme dosyaları
+- `.github/workflows/build.yml`: Parçaları birleştirip Java 17 / Android Gradle ile APK oluşturur
 
-## Teknik yapı
+## Whale OS ile ilgili sınırlamalar
 
-- `index.html`, `styles.css`, `app.js`: HTML5 arayüz, açılış ve kumanda
-- `config.json`: bağlantı ayarları
-- `assets/*.png`: onaylanan ekran görselleri
-- `android-launcher/`: Android `com.eymen.tv` APK ve uygulama listesi Java köprüsü
-- `tests/check.mjs`: ekran/klavye doğrulama
-- `.github/workflows/build.yml`: APK derleme
+**Normal bir uygulama, TV güç düğmesiyle açılırken gösterilen üretici logosunu veya Whale OS sistem başlatıcısını otomatik değiştiremez.** Android uyumlu ve üçüncü taraf HOME uygulamalarına izin veren cihazlarda varsayılan başlatıcı seçimi mümkün olabilir. Bunun Senna/Whale TV üzerinde desteklendiği henüz doğrulanmadı. HDMI girişleri ve TV'nin gerçek görüntü/ses ayarları için üretici yetkileri gerekir.
 
-Kaynak ZIP yüklenirse iş akışı arşivi otomatik açıp bu dosyalarla derleme yapar. Böylece dosyaların tek tek yüklenmesi gerekmez.
+**Uygulama güvenliği:** Çıkan APK deneme/debug sürümüdür; kalıcı ve güvenli imza anahtarıyla yayın sürümüne geçmeden önce mevcut kurulumun verilerini koruma planı hazırlanmalıdır. Debug imzalı farklı APK'lar birbirinin üzerine güncellenemeyebilir. Orijinal TV sistem uygulamasını ve EYMENkids'i kaldırmayın.
 
-**İmza uyarısı:** GitHub Actions'ın ürettiği deneme APK'sı debug imzalıdır; farklı CI çalıştırmaları arasında imza değişebilir. Güncelleme reddedilirse önce imza durumu ve uygulama verileri kontrol edilmelidir. İleride sorunsuz güncelleme için kalıcı ve gizli Android imzalama anahtarı kullanılmalıdır.
-
-**Whale OS sınırı:** Whale OS'nin Android APK kurulumunu veya üçüncü taraf HOME seçimini kabul edip etmeyeceği TV modelinin firmware sürümüne bağlıdır. Android APK kurulumu desteklenmiyorsa HTML5 sürümünü Whale geliştirici portalından dağıtmak gerekir.
+**Telif hakları:** Referans tasarım görsellerindeki film/dizi afişleri örnektir. Bu uygulama hakları alınmış film, dizi veya canlı TV yayını sağlamaz.
