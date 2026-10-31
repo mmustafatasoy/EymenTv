@@ -1,93 +1,142 @@
-name: Build EYMEN TV APK
+name: Build EYMEN Uydu TV — Kanal Listesi
 
 on:
   push:
     branches: [main]
     paths:
-      - 'web-parts/**'
-      - 'android-launcher/**'
+      - 'eymen-uydu-kontrol/**'
+      - 'uydu-packages/**'
       - '.github/workflows/build.yml'
-      - 'EYMEN-TV-WhaleOS-v1.0-KAYNAK-PROJE.zip'
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: eymen-uydu-main-release
+  cancel-in-progress: false
+
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - name: Checkout EymenTv
+      - name: Checkout EYMEN TV channel application
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
 
-      - name: Reconstruct original EYMEN TV screens and splash animation
+      - name: Restore channel application source (initial migration only)
         shell: bash
         run: |
           set -euo pipefail
-          if test -f web-parts/part-00.txt; then
-            cat web-parts/part-*.txt > index.html
-          elif test -s EYMEN-TV-WhaleOS-v1.0-KAYNAK-PROJE.zip; then
-            mkdir -p /tmp/eymentv
-            unzip -q EYMEN-TV-WhaleOS-v1.0-KAYNAK-PROJE.zip -d /tmp/eymentv
-            cp -a /tmp/eymentv/EYMEN-TV-WhaleOS/. ./
+          if test -f uydu-packages/eymen-tv-0.4.b64; then
+            base64 -d uydu-packages/eymen-tv-0.4.b64 > /tmp/eymen-tv-04.zip
+            unzip -q /tmp/eymen-tv-04.zip
           fi
-          test -s index.html || { echo "::error::EYMEN TV screen source missing"; exit 1; }
-          python3 - <<'PY'
-          from pathlib import Path
-          page=Path('index.html').read_text(encoding='utf-8')
-          must=['id="splash-letters"','id="hotspots"','EYMEN_INLINE_IMAGES','assets/home.png','assets/apps.png','assets/settings.png','window.EYMEN_TV']
-          for token in must:
-              if token not in page: raise SystemExit('Missing EYMEN TV feature: '+token)
-          print('EYMEN TV original image-based UI:',len(page),'characters, passed')
-          PY
-          if test -f web-parts/part-00.txt; then
-            echo "Source stored in 13 Git blobs, reassembled into exact approved art."
-          fi
+          test -f eymen-uydu-kontrol/build.sh
+          test -f eymen-uydu-kontrol/src/com/eymen/uydukontrol/PageNav.java
+          test -f eymen-uydu-kontrol/tests/PageNavTest.java
+          echo "Channel project source available; no launcher source present."
 
-      - name: Java 17
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Android SDK packages
+      - name: Install Android SDK 33
         shell: bash
         run: |
           set -euo pipefail
-          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          if [ ! -x "$SDKMANAGER" ]; then
-            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)"
-          fi
-          yes | "$SDKMANAGER" --licenses > /dev/null || true
-          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+          : "${ANDROID_HOME:=/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses || true
+          "$SDKMANAGER" 'platforms;android-33' 'build-tools;33.0.2'
 
-      - name: Gradle 8.11.1
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.11.1'
-
-      - name: Build Android-compatible TV launcher
-        working-directory: android-launcher
-        run: gradle :app:assembleDebug --stacktrace --no-daemon
-
-      - name: Verify compiled APK
+      - name: Test ten-channel paging and remote navigation
+        shell: bash
         run: |
-          test -s android-launcher/app/build/outputs/apk/debug/app-debug.apk
-          ls -lh android-launcher/app/build/outputs/apk/debug/app-debug.apk
+          set -euo pipefail
+          cd eymen-uydu-kontrol
+          mkdir -p build/navtests
+          javac -d build/navtests src/com/eymen/uydukontrol/PageNav.java tests/PageNavTest.java
+          java -cp build/navtests PageNavTest
 
-      - name: Publish installable APK in GitHub Releases
+      - name: Build EYMEN TV channel APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd eymen-uydu-kontrol
+          export TV_ANDROID_JAR="$ANDROID_HOME/platforms/android-33/android.jar"
+          export TV_BUILD_TOOLS="$ANDROID_HOME/build-tools/33.0.2"
+          bash build.sh
+          test -s build/EYMEN-TV-0.4.apk
+          ls -lh build/EYMEN-TV-0.4.apk
+
+      - name: Commit channel source and remove temporary packed archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          if test -f uydu-packages/eymen-tv-0.4.b64; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A eymen-uydu-kontrol
+            git rm -f uydu-packages/eymen-tv-0.4.b64
+            git commit -m "source: move TV channel app into main and remove bootstrap archive [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Publish the existing verified channel APK under a dedicated release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          if gh release view uydu-tv-v0.4-test --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release download uydu-tv-v0.4-test --repo "$GITHUB_REPOSITORY" --pattern EYMEN-TV-0.4.apk --dir dist
+            mv dist/EYMEN-TV-0.4.apk dist/EYMEN-TV-Kanal-Listesi-v0.4.apk
+          else
+            cp eymen-uydu-kontrol/build/EYMEN-TV-0.4.apk dist/EYMEN-TV-Kanal-Listesi-v0.4.apk
+          fi
+          test -s dist/EYMEN-TV-Kanal-Listesi-v0.4.apk
+          cat > /tmp/eymen-release-notes.md <<'NOTES'
+          # EYMEN TV — Uydu Kanal Listesi v0.4
+          
+          Bu APK **TV ana ekranı/launcher değildir**. Uydu kanal listesi projesinin Android uyumlu cihazlar için test derlemesidir.
+          
+          - Kumandayla 10'lu kanal sayfaları arasında gezinme
+          - Kanal listesini ve logoları yönetmeye yönelik arayüz
+          - Şeffaf kanal menüsü ve EYMEN TV görsel tasarımı
+          
+          **Sınırlama:** Whale OS / DTVKit uydu tunerine erişim, gerçek görüntü ve ses cihazda ayrıca test edilmelidir. Uygulamayı varsayılan HOME olarak seçmeyin. Eski TV yazılımını veya EYMENkids'i silmeyin.
+          NOTES
+          if ! gh release view uydu-tv-v0.4 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create uydu-tv-v0.4 dist/EYMEN-TV-Kanal-Listesi-v0.4.apk \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$(git rev-parse HEAD)" \
+              --title "EYMEN TV — Uydu Kanal Listesi v0.4" \
+              --notes-file /tmp/eymen-release-notes.md \
+              --latest
+          else
+            echo "Canonical channel release already exists. Preserve its APK signing."
+          fi
+          gh release view uydu-tv-v0.4 --repo "$GITHUB_REPOSITORY" --json url,assets
+
+      - name: Remove obsolete launcher release and duplicate channel test release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p dist
-          cp android-launcher/app/build/outputs/apk/debug/app-debug.apk dist/EymenTv-v1.0.0-test.apk
-          TAG="v1.0.0-test"
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/EymenTv-v1.0.0-test.apk --repo "$GITHUB_REPOSITORY" --clobber
-          else
-            gh release create "$TAG" dist/EymenTv-v1.0.0-test.apk --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "EYMEN TV 1.0 — TV Launcher Test APK" --notes "Android uyumlu TV'ler için deneme sürümü. Whale OS'nin APK veya HOME kullanımına izin vermesi garanti değildir. Önce normal uygulama olarak test edin." --prerelease
+          if gh release view v1.0.0-test --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release delete v1.0.0-test --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
+            echo "Old launcher release removed."
           fi
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url,assets
+          if gh release view uydu-tv-v0.4-test --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release delete uydu-tv-v0.4-test --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
+            echo "Duplicate channel test release removed after canonical publication."
+          fi

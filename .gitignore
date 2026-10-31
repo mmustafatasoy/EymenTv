@@ -1,0 +1,9 @@
+# Generated files from the channel APK build
+eymen-uydu-kontrol/build/
+*.class
+*.apk
+*.dex
+*.ap_
+*.idsig
+local.properties
+.DS_Store

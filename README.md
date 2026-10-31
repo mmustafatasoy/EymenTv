@@ -1,42 +1,41 @@
-# EYMEN TV — Whale OS / Android TV Launcher
+# EYMEN TV — Uydu Kanal Listesi
 
-Görselleri onaylanan **EYMEN TV** ana ekranı, uygulamalar ve ayarlar tasarımını kullanan özel TV başlatıcısı. EYMENkids uygulamasından **ayrı** bir projedir.
+**EYMEN TV artık yalnızca uydu/TV kanal listesi uygulamasıdır.** Eski TV ana ekranı (launcher) projesi iptal edilmiştir ve bu deponun `main` dalında bulunmaz.
 
-## APK indirme — GitHub Releases
+## 📥 APK indir
 
-**[⬇ EYMEN TV v1.0 Test APK indir (11,4 MB)](https://github.com/mmustafatasoy/EymenTv/releases/download/v1.0.0-test/EymenTv-v1.0.0-test.apk)**
+**[EYMEN TV — Kanal Listesi v0.4 APK](https://github.com/mmustafatasoy/EymenTv/releases/download/uydu-tv-v0.4/EYMEN-TV-Kanal-Listesi-v0.4.apk)**
 
-**[📦 v1.0.0-test Releases sayfası](https://github.com/mmustafatasoy/EymenTv/releases/tag/v1.0.0-test)**
+**[GitHub Releases — Kanal Listesi](https://github.com/mmustafatasoy/EymenTv/releases/tag/uydu-tv-v0.4)**
 
-1. Yukarıdaki APK bağlantısını açarak `EymenTv-v1.0.0-test.apk` dosyasını indir.
-2. APK'yı FAT32 biçimli USB belleğe kopyala.
-3. Televizyonun dosya yöneticisinden APK dosyasını aç. Cihaz dışarıdan uygulama kurmayı destekliyorsa kurulum ekranı açılır.
-4. EYMEN TV'yi önce **normal uygulama** olarak başlat ve kumanda yön/OK/Geri tuşlarını test et.
-5. Yalnızca TV izin veriyorsa `Ayarlar → Varsayılan uygulamalar → Ana ekran` veya cihazın sunduğu HOME seçim ekranında EYMEN TV'yi seç.
+Bu depo özel (Private) ise indirmek için depoya erişim yetkisi bulunan GitHub hesabıyla giriş yapılmalıdır.
 
-**Derleme yeşil başarılı:** [GitHub Actions — Build EYMEN TV APK](https://github.com/mmustafatasoy/EymenTv/actions/workflows/build.yml).
+## Özellikler ve sınırlar
 
-APK, GitHub Actions depolama kotasından bağımsız olması için doğrudan **Releases** bölümüne yüklenir. **Kaynak ZIP yüklemen gerekmez**: Referans ekranların tamamı bu depoda saklanır ve derleme sırasında birleştirilir.
+- Kanal listesinde kumandayla yön/OK/Geri kontrolü ve **10 kanallık sayfalar** arasında hızlı geçiş hedeflenir.
+- Kanal ekleme, düzenleme, silme ve kanallara özel logo tanımlama arayüzü bulunur.
+- Kanal listesi üzerinde şeffaf menü, kanal bilgi katmanı ve **EYMEN TV / atasoyyazılım.com** görsel markalaması geliştirme kapsamındadır.
+- **DTVKit ve uydu alıcısı entegrasyonu; gerçek tuner, kanal geçişi, görüntü ve ses kontrolü** cihazın izin ve API'lerine bağlıdır. Senna/Whale OS üzerinde doğrulanmadan tüm kanalların açıldığı veya sesin çalıştığı iddia edilmemelidir.
+- Bu APK **Android uyumlu TV'ler için test sürümüdür**. Whale OS üzerinde APK kurulum ve sistem kanal uygulamasına erişim ayrıca test gerektirir.
+- EYMENkids bu depodan bağımsızdır ve değiştirilmez.
 
-## Tasarım ve özellikler
+## Kaynak kod ve otomatik derleme
 
-- Düşen harflerle **EYMEN TV** animasyonu (uygulama açıldığında)
-- Referans görsellerin aynısını içeren ana sayfa, uygulamalar ve ayarlar
-- Kumanda yön / OK / Geri tuşlarıyla gezinme
-- Android uyumlu cihazda kurulu uygulamaları listeleme, görsel kartlara eşleştirme, favoriler
-- Uygulama içi parlaklık, kontrast ve görünüm tercihleri (TV panel ayarları değildir)
-- Android izin verirse HOME (ana ekran) seçimi
+Proje kaynakları `eymen-uydu-kontrol/` içinde bulunur. Bu proje ilk aktarımda `uydu-packages/eymen-tv-0.4.b64` arşivinden güvenli biçimde açılarak ana dala yerleştirilir; kaynak aktarıldığında arşiv kaldırılır.
 
-## Teknik kaynaklar
+- **[Actions — Build EYMEN Uydu TV](https://github.com/mmustafatasoy/EymenTv/actions/workflows/build.yml)**
+- İş akışı, kanal sayfaları için Java testlerini çalıştırır; Android API 33 ile APK derler.
+- Testten geçen kanal sürümü **Releases** sayfasında yayımlanır. Arşivden kaynak aktarımı ilk başarılı derlemeden sonra tamamlanır.
 
-- `web-parts/part-00.txt` — `part-12.txt`: Onaylanan ekranların PNG verilerini, CSS ve JavaScript'i içeren tam HTML5 arayüz
-- `android-launcher/`: Android TV uygulama kabuğu, Java köprüsü ve derleme dosyaları
-- `.github/workflows/build.yml`: Parçaları birleştirip Java 17 / Android Gradle ile APK oluşturur
+## Televizyona kurulum
 
-## Whale OS ile ilgili sınırlamalar
+1. Yukarıdaki APK'yı indirip USB belleğe kopyala.
+2. TV harici APK yüklemeye izin veriyorsa dosya yöneticisinden açıp kur.
+3. Uygulamayı normal TV uygulaması olarak başlat; **varsayılan HOME/launcher olarak seçme**.
+4. Kanal sayfalarını, kumandayı ve sesi test et. Cihaz üreticisi uydu tuneri erişimini engelliyorsa uygulama orijinal uydu yazılımının yerine geçemeyebilir.
 
-**Normal bir uygulama, TV güç düğmesiyle açılırken gösterilen üretici logosunu veya Whale OS sistem başlatıcısını otomatik değiştiremez.** Android uyumlu ve üçüncü taraf HOME uygulamalarına izin veren cihazlarda varsayılan başlatıcı seçimi mümkün olabilir. Bunun Senna/Whale TV üzerinde desteklendiği henüz doğrulanmadı. HDMI girişleri ve TV'nin gerçek görüntü/ses ayarları için üretici yetkileri gerekir.
+**Uyarı:** APK'nın imzası kurulu farklı bir sürümle uyuşmuyorsa Android güncellemeyi reddedebilir. Verileri korumak için mevcut uygulamayı kaldırmadan önce bir yedekleme planı yap. TV'nin sistem uygulamalarını veya EYMENkids'i kaldırma.
 
-**Uygulama güvenliği:** Çıkan APK deneme/debug sürümüdür; kalıcı ve güvenli imza anahtarıyla yayın sürümüne geçmeden önce mevcut kurulumun verilerini koruma planı hazırlanmalıdır. Debug imzalı farklı APK'lar birbirinin üzerine güncellenemeyebilir. Orijinal TV sistem uygulamasını ve EYMENkids'i kaldırmayın.
+## Geliştirici
 
-**Telif hakları:** Referans tasarım görsellerindeki film/dizi afişleri örnektir. Bu uygulama hakları alınmış film, dizi veya canlı TV yayını sağlamaz.
+Muhammet Atasoy — EYMEN TV
