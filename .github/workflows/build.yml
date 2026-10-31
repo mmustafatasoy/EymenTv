@@ -72,8 +72,8 @@ jobs:
           export TV_ANDROID_JAR="$ANDROID_HOME/platforms/android-33/android.jar"
           export TV_BUILD_TOOLS="$ANDROID_HOME/build-tools/33.0.2"
           bash build.sh
-          test -s build/EYMEN-TV-0.7.apk
-          ls -lh build/EYMEN-TV-0.7.apk
+          test -s build/EYMEN-TV-0.8.apk
+          ls -lh build/EYMEN-TV-0.8.apk
 
       - name: Commit channel source and remove temporary packed archive
         shell: bash
@@ -89,21 +89,26 @@ jobs:
             git push origin HEAD:main
           fi
 
+      - name: Verify cross-TV input filtering and fallback
+        run: python3 eymen-uydu-kontrol/tests/cross_tv_smoke_test.py
+
       - name: Verify hourly banner, actual photo and glossy logo assets
         run: python3 eymen-uydu-kontrol/tests/promo_smoke_test.py
 
-      - name: Publish EYMEN TV v0.7 hourly lower-third banner APK
+      - name: Publish EYMEN TV v0.8 hourly lower-third banner APK
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp eymen-uydu-kontrol/build/EYMEN-TV-0.7.apk dist/EYMEN-TV-Kanal-Listesi-v0.7.apk
-          test -s dist/EYMEN-TV-Kanal-Listesi-v0.7.apk
+          cp eymen-uydu-kontrol/build/EYMEN-TV-0.8.apk dist/EYMEN-TV-Kanal-Listesi-v0.8.apk
+          test -s dist/EYMEN-TV-Kanal-Listesi-v0.8.apk
           cat > /tmp/eymen-release-notes.md <<'NOTES'
-          # EYMEN TV — Uydu Kanal Listesi v0.7
+          # EYMEN TV — Uydu Kanal Listesi v0.8
 
+          - Vestel gibi DTVKit dışı TV'lerde cihazın izin verdiği kanal kayıtlarına erişim için otomatik TV giriş uyumluluğu
+          - Whale TV'nin çalışan DTVKit listesi korunur; kanal menüsü ve reklam görüntüsü değiştirilmedi
           - Önceki özellikler korunmuştur: 10 kanallık sayfalar, kanal düzenleme, logolar ve kumanda
           - Yayın sırasında **alt bantta** animasyonlu EYMEN TV tanıtımı
           - Gerçek aile fotoğrafı ve parlak EYMEN TV logo görselleri korunmuştur; alt bant tasarımı profesyonel prodüksiyon tarzı neon/altın kompozisyonla yenilendi.
@@ -112,19 +117,19 @@ jobs:
           - Uygulama ayarlarında **Reklamı şimdi göster (test)** seçeneği bulunur
           - Yayın sesi kapatılmaz, video oynatımı durdurulmaz
           
-          **Whale OS cihazında tuner ve ses desteği hâlâ fiziksel TV testine bağlıdır.**
+          **Vestel ve diğer cihazlarda TV kanal sağlayıcısının erişime açık olması gerekir.** Android TV'nin TV Input Framework erişimi üreticiye göre değişir; gerçek görüntü/ses fiziksel TV'de test edilmelidir.
           NOTES
-          if ! gh release view uydu-tv-v0.7 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create uydu-tv-v0.7 dist/EYMEN-TV-Kanal-Listesi-v0.7.apk \
+          if ! gh release view uydu-tv-v0.8 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create uydu-tv-v0.8 dist/EYMEN-TV-Kanal-Listesi-v0.8.apk \
               --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "EYMEN TV — Uydu Kanal Listesi v0.7 • Saatlik Animasyonlu Reklam" \
+              --title "EYMEN TV — Uydu Kanal Listesi v0.8 • Saatlik Animasyonlu Reklam" \
               --notes-file /tmp/eymen-release-notes.md \
               --latest
           else
             echo "Release v0.5 already exists; preserving stable APK asset."
           fi
-          gh release view uydu-tv-v0.7 --repo "$GITHUB_REPOSITORY" --json url,assets
+          gh release view uydu-tv-v0.8 --repo "$GITHUB_REPOSITORY" --json url,assets
 
       - name: Remove obsolete launcher release and duplicate channel test release
         shell: bash

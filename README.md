@@ -4,11 +4,19 @@
 
 ## 📥 APK indir
 
-**[⬇ EYMEN TV v0.7 — Saatlik Animasyonlu Alt Bant Reklamı APK](https://github.com/mmustafatasoy/EymenTv/releases/download/uydu-tv-v0.7/EYMEN-TV-Kanal-Listesi-v0.7.apk)**
+**[⬇ EYMEN TV v0.8 — Saatlik Animasyonlu Alt Bant Reklamı APK](https://github.com/mmustafatasoy/EymenTv/releases/download/uydu-tv-v0.8/EYMEN-TV-Kanal-Listesi-v0.8.apk)**
 
 [GitHub Releases — Kanal Listesi](https://github.com/mmustafatasoy/EymenTv/releases)
 
 Önceki v0.4 ve v0.5 sürümleri Releases'de geri dönüş amacıyla korunur.
+
+## Vestel ve diğer TV'lerde kanal desteği — v0.8
+
+- Whale TV'de mevcut DTVKit yayın kaynağı aynen tercih edilir.
+- DTVKit bulunmadığında Vestel dahil farklı üreticilerin erişime açtığı `TvContract.Channels` kayıtları da kanal listesinde gösterilir.
+- Kanal veritabanı boş veya erişime kapalıysa uygulama kaç kayıt ve kaç TV girişi görülebildiğini gösterir.
+- **TV üreticisinin sistem kayıtlarını gizlemesi durumunda normal APK ile bunu aşmak mümkün olmayabilir.** Görünen bir kanalın oynatılabilmesi de tuner izinlerine bağlıdır.
+- **Kanal menüsü, kumanda kısayolları ve reklam çizimi değiştirilmedi.**
 
 ## Özellikler ve sınırlar
 
@@ -19,7 +27,7 @@
 - Bu APK **Android uyumlu TV'ler için test sürümüdür**. Whale OS üzerinde APK kurulum ve sistem kanal uygulamasına erişim ayrıca test gerektirir.
 - EYMENkids bu depodan bağımsızdır ve değiştirilmez.
 
-## Yayın içi reklam — v0.7
+## Yayın içi reklam — v0.8
 
 - Reklam **yayının alt kısmında tam genişlikte**, klasik TV alt bant reklamı gibi görünür; sağ altta bağımsız bir kutu değildir.
 - Aile fotoğrafı altın renkli ışık yayıyla açılır, kırmızı/mavi neon prodüksiyon çizgileri hareket eder; ardından **www.atasoyyazılım.com**, **0531 221 89 65**, **MUHAMMET ATASOY** yazıları sıralı şekilde belirir, en son EYMEN TV logosu animasyonla gelir.

@@ -15,7 +15,56 @@ public class PlayerActivity extends Activity {
  try(InputStream picture=getAssets().open("promo_logo.jpg")){promoLogo=BitmapFactory.decodeStream(picture);}catch(Exception e){android.util.Log.e("EYMEN-TV","Reklam logosu okunamadı",e);}long lastPromo=prefs.getLong(PROMO_LAST_KEY,0L);if(lastPromo<=0||lastPromo>System.currentTimeMillis()){prefs.edit().putLong(PROMO_LAST_KEY,System.currentTimeMillis()).apply();}h.post(clock);
  if(checkSelfPermission("android.permission.READ_TV_LISTINGS")!=PackageManager.PERMISSION_GRANTED){message="Kanal listesini görmek için TV listesi izni gerekli.";requestPermissions(new String[]{"android.permission.READ_TV_LISTINGS"},42);}else loadChannels();}
  @Override public void onRequestPermissionsResult(int r,String[] p,int[] result){super.onRequestPermissionsResult(r,p,result);if(checkSelfPermission("android.permission.READ_TV_LISTINGS")==PackageManager.PERMISSION_GRANTED)loadChannels();else{message="İzin verilmedi. MENU → İzin ayarları.";ui.invalidate();}}
- private void loadChannels(){if(loading)return;loading=true;worker.execute(()->{ArrayList<Channel> result=new ArrayList<>();String err=null;try(Cursor c=getContentResolver().query(TvContract.Channels.CONTENT_URI,new String[]{"_id","display_number","display_name","input_id"},null,null,null)){if(c!=null)while(c.moveToNext()){String input=c.getString(3);if(input!=null&&input.startsWith("com.droidlogic.dtvkit.inputsource/")){Channel x=new Channel();x.id=c.getLong(0);x.num=c.getString(1);x.originalName=c.getString(2);x.name=prefs.getString("name_"+x.id,x.originalName);x.input=input;result.add(x);}}result.sort((a,b)->{try{return Integer.compare(Integer.parseInt(a.num),Integer.parseInt(b.num));}catch(Exception e){return String.valueOf(a.num).compareTo(String.valueOf(b.num));}});}catch(Exception e){err=e.toString();}final String error=err;h.post(()->{loading=false;if(dead)return;all.clear();all.addAll(result);restoreOrder();filter();message=error!=null?error:(all.isEmpty()?"DTVKit kanalı bulunamadı.":"Kanal seçip OK'ye bas.");ui.invalidate();if(!visible.isEmpty()&&active){long saved=prefs.getLong("lastChannel",-1);Channel first=visible.get(0);for(Channel x:visible)if(x.id==saved)first=x;play(first);menu=true;}});});}
+ private void loadChannels(){
+  if(loading)return;loading=true;
+  worker.execute(()->{
+   ArrayList<Channel> raw=new ArrayList<>(),result=new ArrayList<>();
+   String err=null;int scanned=0;int tvInputs=0;
+   try{
+    TvInputManager manager=(TvInputManager)getSystemService(TV_INPUT_SERVICE);
+    if(manager!=null)tvInputs=manager.getTvInputList().size();
+   }catch(Exception ignored){}
+   try(Cursor c=getContentResolver().query(
+     TvContract.Channels.CONTENT_URI,
+     new String[]{"_id","display_number","display_name","input_id"},
+     null,null,null)){
+    if(c==null){err="TV kanal sağlayıcısı yanıt vermedi. Vestel uydu kayıtları üçüncü taraf uygulamalara kapalı olabilir.";}
+    else{scanned=c.getCount();while(c.moveToNext()){
+      String input=c.getString(3);
+      if(input==null||input.trim().isEmpty())continue;
+      Channel x=new Channel();x.id=c.getLong(0);
+      x.num=c.getString(1);x.originalName=c.getString(2);
+      x.name=prefs.getString("name_"+x.id,x.originalName);
+      x.input=input;raw.add(x);
+    }}
+   }catch(SecurityException e){err="TV kanal erişim izni reddedildi: "+e.getMessage();}
+    catch(Exception e){err="Kanal veritabanı okunamadı: "+e.toString();}
+   // Existing Whale televisions retain the known-good DTVKit list. Other Android TVs
+   // (including Vestel models) may expose a different TV Input Framework provider ID.
+   // Never invent channels: use only rows that the device actually exposes.
+   boolean dtvkitFound=false;
+   for(Channel ch:raw)if(ch.input.startsWith("com.droidlogic.dtvkit.inputsource/")){dtvkitFound=true;break;}
+   for(Channel ch:raw)if(!dtvkitFound||ch.input.startsWith("com.droidlogic.dtvkit.inputsource/"))result.add(ch);
+   result.sort((a,b)->{
+    try{return Integer.compare(Integer.parseInt(a.num),Integer.parseInt(b.num));}
+    catch(Exception e){return String.valueOf(a.num).compareTo(String.valueOf(b.num));}
+   });
+   final String error=err;final int readable=scanned,availableInputs=tvInputs;
+   h.post(()->{
+    loading=false;if(dead)return;
+    all.clear();all.addAll(result);restoreOrder();filter();
+    message=error!=null?error:(all.isEmpty()?
+      "Kanal erişimi yok: "+readable+" görünür kayıt, "+availableInputs+" TV girişi. TV sistem izinlerini kontrol edin.":
+      "Kanal seçip OK'ye bas.");
+    ui.invalidate();
+    if(!visible.isEmpty()&&active){
+     long saved=prefs.getLong("lastChannel",-1);Channel first=visible.get(0);
+     for(Channel x:visible)if(x.id==saved)first=x;
+     play(first);menu=true;
+    }
+   });
+  });
+ }
  private void requestLogo(Channel c){if(c.logoRequested||dead)return;c.logoRequested=true;logoWorker.execute(()->{try(InputStream custom=new FileInputStream(customLogoFile(c.id))){Bitmap bmp=BitmapFactory.decodeStream(custom);if(bmp!=null){h.post(()->{if(!dead){c.logo=bmp;ui.invalidate();}});return;}}catch(Exception ignored){}String local=logoName(c.originalName);try(InputStream asset=getAssets().open("logos/"+local+".png")){Bitmap b=BitmapFactory.decodeStream(asset);if(b!=null){h.post(()->{if(!dead){c.logo=b;ui.invalidate();}});return;}}catch(Exception ignored){}try(InputStream in=getContentResolver().openInputStream(TvContract.buildChannelLogoUri(c.id))){BitmapFactory.Options options=new BitmapFactory.Options();options.inJustDecodeBounds=true;BitmapFactory.decodeStream(in,null,options);int sample=1;while(options.outWidth/sample>256||options.outHeight/sample>128)sample*=2;try(InputStream data=getContentResolver().openInputStream(TvContract.buildChannelLogoUri(c.id))){options.inJustDecodeBounds=false;options.inSampleSize=sample;Bitmap bmp=BitmapFactory.decodeStream(data,null,options);h.post(()->{if(!dead){c.logo=bmp;ui.invalidate();}});}}catch(Exception ignored){}});}
  private File customLogoFile(long channelId){File dir=new File(getFilesDir(),"channel_logos");return new File(dir,"channel_"+channelId+".png");}
  private void chooseChannelLogo(Channel channel){
