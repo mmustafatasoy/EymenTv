@@ -1,0 +1,45 @@
+name: İnternet kanal listesi — günlük test
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'channels/build_list.py'
+      - '.github/workflows/channels.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: eymen-channels
+  cancel-in-progress: false
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Kaynak kodu al
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Kanalları indir ve tek tek dene
+        run: python3 channels/build_list.py
+
+      - name: Liste değiştiyse kaydet
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add channels/tr.m3u channels/report.md
+          if git diff --cached --quiet; then
+            echo "Liste değişmedi"
+            exit 0
+          fi
+          git commit -m "kanallar: günlük test sonrası liste güncellendi [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
