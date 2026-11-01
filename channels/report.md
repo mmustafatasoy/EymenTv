@@ -1,0 +1,178 @@
+# Kanal listesi raporu
+
+- Tarih: 2026-11-01 23:51 UTC
+- Denenen yayın: 166
+- Listede: 127 kanal (118 çalışıyor, 9 Türkiye dışından kapalı, TV'de yeniden denenir)
+- Çalışmadığı için çıkarılan: 39
+
+## Listedeki kanallar
+
+- Haber · 24 TV · çalışıyor
+- Haber · 360 · çalışıyor
+- Haber · A Haber · çalışıyor
+- Haber · Almahriah TV · çalışıyor
+- Haber · AS TV · çalışıyor
+- Haber · DHA · çalışıyor
+- Haber · Ekoturk · çalışıyor
+- Haber · Finans Turk TV · çalışıyor
+- Haber · Flash Haber TV · çalışıyor
+- Haber · Haber61 TV · çalışıyor
+- Haber · Haber Global · çalışıyor
+- Haber · Haberturk TV · çalışıyor
+- Haber · Halk TV SD · çalışıyor
+- Haber · Life TV (Turkiye) · çalışıyor
+- Haber · Mekameleen TV · çalışıyor
+- Haber · OlayTurk TV · çalışıyor
+- Haber · TGRT Haber · çalışıyor
+- Haber · TRT Haber · çalışıyor
+- Spor · A Spor SD · çalışıyor
+- Spor · FB TV · çalışıyor
+- Spor · HTSpor TV · çalışıyor
+- Spor · TJK TV · çalışıyor
+- Spor · TJK TV 2 · Türkiye dışından kapalı
+- Spor · TRT Spor Yildiz · çalışıyor
+- Çocuk · BabyTV Turkiye · Türkiye dışından kapalı
+- Çocuk · Cartoon Network (Turkiye) · çalışıyor
+- Çocuk · Disney Jr. (Turkiye) · Türkiye dışından kapalı
+- Çocuk · Minika Cocuk · çalışıyor
+- Çocuk · Minika Go · çalışıyor
+- Çocuk · TRT Cocuk · çalışıyor
+- Çocuk · TRT Diyanet Cocuk · çalışıyor
+- Belgesel · TRT Belgesel · Türkiye dışından kapalı
+- Müzik · Dream Turk · çalışıyor
+- Müzik · KN Music TV · çalışıyor
+- Müzik · Kral Pop TV · çalışıyor
+- Müzik · Med Muzik · çalışıyor
+- Müzik · Number 1 Ask · çalışıyor
+- Müzik · Number 1 Damar · çalışıyor
+- Müzik · Number 1 Dance · çalışıyor
+- Müzik · Number 1 TV · çalışıyor
+- Müzik · Power Dance · çalışıyor
+- Müzik · Power Love · çalışıyor
+- Müzik · PowerTurk Akustik · çalışıyor
+- Müzik · PowerTurk Slow · çalışıyor
+- Müzik · PowerTurk Taptaze · çalışıyor
+- Müzik · TRT Muzik · çalışıyor
+- Film · CNBC-e · çalışıyor
+- Dini · Al-Zahra TV Turkic · çalışıyor
+- Dini · Diyanet TV · çalışıyor
+- Dini · Diyar TV · çalışıyor
+- Dini · Dost TV · çalışıyor
+- Dini · Lalegul TV · çalışıyor
+- Dini · Sercem TV · çalışıyor
+- Genel · 4U TV · çalışıyor
+- Genel · A2TV · çalışıyor
+- Genel · Aksu TV · çalışıyor
+- Genel · Alanya Posta TV · çalışıyor
+- Genel · Anadolu Net TV · çalışıyor
+- Genel · Aras TV · çalışıyor
+- Genel · ATV Alanya · çalışıyor
+- Genel · ATV Avrupa · çalışıyor
+- Genel · Bir TV · çalışıyor
+- Genel · Bloomberg HT · Türkiye dışından kapalı
+- Genel · Bric ve Satranc TV · çalışıyor
+- Genel · BRTV (Turkiye) · çalışıyor
+- Genel · Ciftci TV · çalışıyor
+- Genel · Deniz Postasi TV · çalışıyor
+- Genel · Edessa TV · çalışıyor
+- Genel · Elsharq TV · çalışıyor
+- Genel · ERTV · çalışıyor
+- Genel · Erzurum Web TV · çalışıyor
+- Genel · ES TV · çalışıyor
+- Genel · ETV Kayseri · çalışıyor
+- Genel · Euro D · çalışıyor
+- Genel · FX (Turkiye) · Türkiye dışından kapalı
+- Genel · Ilke TV · çalışıyor
+- Genel · Kanal 12 · çalışıyor
+- Genel · Kanal 15 · çalışıyor
+- Genel · Kanal 23 · çalışıyor
+- Genel · Kanal 26 · çalışıyor
+- Genel · Kanal 3 · çalışıyor
+- Genel · Kanal 58 · çalışıyor
+- Genel · Kanal 7 Avrupa · çalışıyor
+- Genel · Kanal D (Turkiye) · çalışıyor
+- Genel · Kanal Firat · çalışıyor
+- Genel · Kanal V · çalışıyor
+- Genel · Kent Turk · çalışıyor
+- Genel · Kocaeli TV · çalışıyor
+- Genel · Konya Olay TV · çalışıyor
+- Genel · Luys TV · çalışıyor
+- Genel · MaviKaradeniz TV · çalışıyor
+- Genel · Meltem TV · çalışıyor
+- Genel · Mercan TV · çalışıyor
+- Genel · NTV (Turkiye) · çalışıyor
+- Genel · Persiana Turkiye · çalışıyor
+- Genel · PowerTurk TV · çalışıyor
+- Genel · Power TV (Turkiye) · çalışıyor
+- Genel · Sat 7 Turk · çalışıyor
+- Genel · Semerkand TV · çalışıyor
+- Genel · Star TV (Turkiye) · çalışıyor
+- Genel · Sun RTV · çalışıyor
+- Genel · TBMM TV · çalışıyor
+- Genel · Tele 1 · çalışıyor
+- Genel · Tempo TV · çalışıyor
+- Genel · TGRT Belgesel · çalışıyor
+- Genel · Tivi 6 · çalışıyor
+- Genel · Ton TV · çalışıyor
+- Genel · TRT 1 · çalışıyor
+- Genel · TRT 2 · Türkiye dışından kapalı
+- Genel · TRT 3 · çalışıyor
+- Genel · TRT Avaz · çalışıyor
+- Genel · TRT EBA · çalışıyor
+- Genel · TRT EBA Ilkokul · çalışıyor
+- Genel · TRT EBA Lise · çalışıyor
+- Genel · TRT Genc · Türkiye dışından kapalı
+- Genel · TRT Kurdi · çalışıyor
+- Genel · TRT Turk · çalışıyor
+- Genel · Turksat Tanitim · Türkiye dışından kapalı
+- Genel · TV 264 · çalışıyor
+- Genel · TV 4 · çalışıyor
+- Genel · TV8 (Turkiye) · çalışıyor
+- Genel · TV Den · çalışıyor
+- Genel · Urfa Natik TV · çalışıyor
+- Genel · Van 65 TV · çalışıyor
+- Genel · Vav TV · çalışıyor
+- Genel · YOL TV · çalışıyor
+- Genel · Zarok TV · çalışıyor
+
+## Çıkarılanlar
+
+- Al-Rafidain TV · HTTP 502
+- Altas TV · URLError
+- ATV (Turkiye) · TimeoutError
+- Benguturk TV · URLError
+- Beyaz TV · RemoteDisconnected
+- Bursa TV · HTTP 404
+- Cay TV · URLError
+- Cekmekoy TV · URLError
+- ETV Manisa · URLError
+- Eurosport 1 Turkiye · URLError
+- Eurosport 2 Turkiye · URLError
+- Fortuna TV · URLError
+- Guneydogu TV · URLError
+- GZT · HTTP 404
+- Hunat TV · URLError
+- Icel TV · URLError
+- Kanal 32 · URLError
+- Kanal 33 · URLError
+- Kanal 34 · URLError
+- Kanal 7 · URLError
+- Kanal Hayat · URLError
+- Kay TV · HTTP 404
+- Line TV · URLError
+- MovieSmart Turk · ConnectionResetError
+- MTurk TV · URLError
+- Natural TV · URLError
+- NOW · TimeoutError
+- On4 TV · URLError
+- Qaf TV · HTTP 204 text/plain
+- Show Turk · HTTP 404
+- S Sport 2 · HTTP 400
+- TRT Spor · URLError
+- TurkHaber TV · URLError
+- TV 1 · URLError
+- TV 41 · URLError
+- TV 42 · URLError
+- TV 52 · URLError
+- TVNET (Turkiye) · HTTP 404
+- Ulke TV · URLError
