@@ -112,7 +112,7 @@ jobs:
             echo "release=$RELEASE_RESULT"
             echo "run=$GITHUB_RUN_ID"
             echo "---- errors"
-            grep -E "^e: |error:|What went wrong|Could not|FAILED" -A4 build.log | head -400
+            grep -E "^e: |error:|What went wrong|Could not|FAILED" -A4 build.log | head -400 || true
             echo "---- tail"
             tail -150 build.log
           } > /tmp/ci/latest.txt
