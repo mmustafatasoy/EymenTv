@@ -15,15 +15,15 @@ must=[
 ]
 for token in must: assert token in s,token
 assert 'if(input!=null&&input.startsWith("com.droidlogic.dtvkit.inputsource/"))' not in s
-assert 'android:versionCode="11" android:versionName="0.10"' in manifest
+assert 'android:versionCode="12" android:versionName="0.11"' in manifest
 for preserved in [
  'PageNav.jump(selected,visible.size()',
  'for(int k=0;k<10&&start+k<visible.size();k++)',
- 'private void drawPromo(Canvas c)',
- 'PROMO_INTERVAL_MS=3600000L',
- 'Reklamı şimdi göster (test)',
+ 'private void drawHourlyBrand(Canvas c)',
+ 'BRAND_INTERVAL_MS=3600000L',
+ 'Saatlik logo/web göster (test)',
 ]:
- assert preserved in s,"Menu/reklam unexpectedly changed "+preserved
+ assert preserved in s,"Menu/brand unexpectedly changed "+preserved
 # Model the exact fallback policy with independent sample vendor input IDs.
 def scan(inputs):
  dtv=any(x.startswith('com.droidlogic.dtvkit.inputsource/') for x in inputs)
