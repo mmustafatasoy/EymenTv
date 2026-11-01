@@ -204,39 +204,193 @@ public class PlayerActivity extends Activity {
  @Override protected void onStop(){active=false;brandStartedUptime=-1L;epoch++;tv.reset();audio.abandonAudioFocusRequest(focus);hasFocus=false;stoppedPlayback=current!=null;h.removeCallbacks(hide);super.onStop();}
  @Override protected void onDestroy(){dead=true;h.removeCallbacksAndMessages(null);worker.shutdownNow();logoWorker.shutdownNow();super.onDestroy();}
  private String time(long t){return new SimpleDateFormat("HH:mm",tr).format(new Date(t));}
- class Overlay extends View {final Paint p=new Paint(3);Overlay(){super(PlayerActivity.this);}void text(Canvas c,String s,float x,float y,float size,int color,boolean bold){p.setTypeface(bold?Typeface.create("sans-serif",Typeface.BOLD):Typeface.create("sans-serif",Typeface.NORMAL));p.setTextSize(size);p.setColor(color);c.drawText(s==null?"":s,x,y,p);}void fit(Canvas c,String s,float x,float y,float size,float width,int color,boolean bold){p.setTypeface(Typeface.create("sans-serif",bold?Typeface.BOLD:Typeface.NORMAL));p.setTextSize(size);String safe=s==null?"":s;while(p.measureText(safe)>width&&safe.length()>1)safe=safe.substring(0,safe.length()-1);if(!safe.equals(s))safe=safe.length()>1?safe.substring(0,safe.length()-1)+"…":"…";text(c,safe,x,y,size,color,bold);}void panel(Canvas c,float l,float t,float r,float b,boolean focus){p.setStyle(Paint.Style.FILL);p.setColor(Color.argb(focus?130:opacity,focus?0:10,focus?130:25,focus?150:45));c.drawRoundRect(l,t,r,b,18,18,p);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(focus?2:1);p.setColor(focus?0xff35e6ee:0xff6085a2);c.drawRoundRect(l,t,r,b,18,18,p);p.setStyle(Paint.Style.FILL);}void logo(Canvas c,Channel ch,float x,float y,float w,float ht){requestLogo(ch);if(ch.logo!=null){float scale=Math.min(w/ch.logo.getWidth(),ht/ch.logo.getHeight());float bw=ch.logo.getWidth()*scale,bh=ch.logo.getHeight()*scale;c.drawBitmap(ch.logo,null,new RectF(x+(w-bw)/2,y+(ht-bh)/2,x+(w+bw)/2,y+(ht+bh)/2),p);}else{p.setColor(0xff1b4b65);c.drawRoundRect(x,y,x+w,y+ht,8,8,p);fit(c,ch.name,x+8,y+ht*.62f,18,w-16,Color.WHITE,true);}}
-
- @Override protected void onDraw(Canvas c){super.onDraw(c);c.save();c.scale(getWidth()/1280f,getHeight()/720f);int white=Color.WHITE,muted=0xffbdcbd6,cyan=0xff35e6ee;
-
- // Brand only: 15 seconds, no lower-third advertisement, at most once every hour.
- if(brandStartedUptime>0&&current!=null&&!menu){
-  long elapsed=SystemClock.uptimeMillis()-brandStartedUptime;
-  if(elapsed>=0&&elapsed<BRAND_DURATION_MS){
-   long spinMs=(SystemClock.uptimeMillis()-animationStart)%14000L;
-   double angle=spinMs*Math.PI*2/14000.0;
-   float fadeIn=Math.min(1f,elapsed/450f);
-   float fadeOut=Math.min(1f,(BRAND_DURATION_MS-elapsed)/550f);
-   int alpha=(int)(255*Math.max(0f,Math.min(fadeIn,fadeOut)));
-   c.save();c.translate(1137f,80f);
-   c.saveLayerAlpha(-120f,-64f,120f,64f,alpha);
-   c.skew(0f,(float)Math.sin(angle)*.11f);
-   float yaw=(float)Math.cos(angle);
-   c.scale(yaw>=0f?Math.max(.06f,yaw):Math.min(-.06f,yaw),1f);
-   if(brandLogo!=null){
-    p.setShader(null);p.setStyle(Paint.Style.FILL);p.setColor(Color.WHITE);p.setAlpha(255);
-    c.drawBitmap(brandLogo,null,new RectF(-113,-58,113,58),p);
-   }else{
-    text(c,"EYMEN TV",-105,0,29,white,true);
-    text(c,"www.atasoyyazilim.com",-106,35,15,cyan,true);
-   }
-   c.restore();c.restore();
+ class Overlay extends View {
+  final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+  private static final int PINK=0xffff3c9b, BLUE=0xff19bfff, PURPLE=0xffb866ff;
+  private static final int WHITE=0xffffffff, MUTED=0xffaebed7, GOLD=0xffffd67c;
+  private static final int PANEL=0xff07162c, PALE=0xffd6e9fb;
+  Overlay(){super(PlayerActivity.this);setLayerType(View.LAYER_TYPE_SOFTWARE,null);}
+  void text(Canvas c,String s,float x,float y,float size,int color,boolean bold){
+    p.setShader(null);p.setStyle(Paint.Style.FILL);p.setTypeface(Typeface.create("sans-serif",bold?Typeface.BOLD:Typeface.NORMAL));
+    p.setTextSize(size);p.setColor(color);p.setAlpha(255);
+    c.drawText(s==null?"":s,x,y,p);
   }
- }
- if(menu){panel(c,28,38,378,680,false);text(c,"EYMEN",48,87,33,white,true);text(c,"TV",176,87,33,cyan,true);if(!favsOnly)panel(c,46,111,216,151,tab==1);else panel(c,224,111,360,151,tab==1);text(c,"Tüm Kanallar",57,137,20,favsOnly?muted:white,true);text(c,"Favoriler",235,137,20,favsOnly?white:muted,true);
- int start=(selected/10)*10;for(int k=0;k<10&&start+k<visible.size();k++){int i=start+k;Channel ch=visible.get(i);float y=163+k*44;if(i==selected&&tab==0)panel(c,38,y,368,y+41,true);text(c,ch.num,50,y+27,16,white,true);logo(c,ch,82,y+5,67,30);fit(c,ch.name,160,y+27,17,172,white,true);text(c,favorites.contains(favoriteKey(ch))?"★":"☆",340,y+27,20,favorites.contains(favoriteKey(ch))?0xffffce54:muted,false);if(ch==current){p.setColor(cyan);c.drawCircle(363,y+20,3,p);}}
- if(visible.isEmpty())fit(c,favsOnly?"Henüz favori kanal yok":"Kanal bulunamadı",50,218,18,300,white,false);panel(c,46,615,360,647,tab==2);text(c,"⚙  Uygulama ayarları",66,637,18,white,true);text(c,"◀  Sayfa "+(visible.isEmpty()?0:selected/10+1)+" / "+((visible.size()+9)/10)+"  ▶   •   "+visible.size()+" kanal",50,670,14,muted,false);}
- if(info||menu){float left=menu?406:38;panel(c,left,510,1250,654,false);if(current!=null){logo(c,current,left+18,530,95,54);fit(c,current.name,left+18,611,16,116,muted,true);float x=left+135;fit(c,now==null?"Program bilgisi yok":now.title,x,552,28,menu?340:640,white,true);text(c,now==null?"Yayın rehberi bekleniyor":"Şimdi  •  "+time(now.start)+" – "+time(now.end),x,581,18,cyan,false);float barWidth=menu?330:625;p.setColor(0xff526474);c.drawRoundRect(x,600,x+barWidth,605,3,3,p);if(now!=null&&now.end>now.start){float progress=Math.max(0,Math.min(1,(System.currentTimeMillis()-now.start)/(float)(now.end-now.start)));p.setColor(cyan);c.drawRoundRect(x,600,x+barWidth*progress,605,3,3,p);}text(c,time(System.currentTimeMillis())+"  •  "+new SimpleDateFormat("d MMMM EEEE",tr).format(new Date()),x,635,16,white,false);text(c,"SIRADAKİ",1002,542,15,muted,true);fit(c,next==null?"Bilgi bulunamadı":next.title,1002,573,20,225,white,true);if(next!=null)text(c,time(next.start)+"’te başlayacak",1002,603,18,white,false);}
- fit(c,"OK  Kanal listesi    •    Yeşil  Favori    •    Mavi  Ses    •    MENU  Ayarlar",left+4,687,16,1240-left,white,false);}
- if(!message.isEmpty()){panel(c,410,418,1238,486,false);fit(c,message,430,460,18,785,white,false);}if(!digits.isEmpty()){panel(c,1100,100,1240,170,true);text(c,digits,1120,147,30,white,true);}c.restore();}
+  void fit(Canvas c,String s,float x,float y,float size,float width,int color,boolean bold){
+    p.setShader(null);p.setTypeface(Typeface.create("sans-serif",bold?Typeface.BOLD:Typeface.NORMAL));p.setTextSize(size);
+    String safe=s==null?"":s;
+    if(p.measureText(safe)>width){while(safe.length()>1&&p.measureText(safe+"…")>width)safe=safe.substring(0,safe.length()-1);safe+="…";}
+    text(c,safe,x,y,size,color,bold);
+  }
+  void fill(Canvas c,float l,float t,float r,float b,int color,float radius){
+    p.setStyle(Paint.Style.FILL);p.setShader(null);p.setColor(color);p.setAlpha(255);
+    c.drawRoundRect(l,t,r,b,radius,radius,p);
+  }
+  void line(Canvas c,float x1,float y1,float x2,float y2,int color,float width){
+    p.setStyle(Paint.Style.STROKE);p.setShader(null);p.setStrokeWidth(width);p.setColor(color);
+    c.drawLine(x1,y1,x2,y2,p);p.setStyle(Paint.Style.FILL);
+  }
+  void glass(Canvas c,float l,float t,float r,float b,boolean selected,float radius){
+    p.setStyle(Paint.Style.FILL);p.setAlpha(255);
+    p.setShader(new LinearGradient(l,t,r,b,new int[]{
+      selected?0xeb2b1849:Color.argb(Math.min(246,opacity+37),5,18,42),
+      selected?0xe5201647:Color.argb(Math.min(242,opacity+27),11,29,54),
+      selected?0xee411044:Color.argb(Math.min(232,opacity+25),7,14,37)
+    },null,Shader.TileMode.CLAMP));
+    c.drawRoundRect(l,t,r,b,radius,radius,p);p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(selected?3:1.3f);
+    p.setColor(selected?PINK:0xff376294);c.drawRoundRect(l,t,r,b,radius,radius,p);
+    if(selected){
+      p.setStrokeWidth(1.1f);p.setColor(0xffa7dbff);
+      c.drawRoundRect(l+3,t+3,r-3,b-3,Math.max(1,radius-2),Math.max(1,radius-2),p);
+    }
+    p.setStyle(Paint.Style.FILL);
+  }
+  void panel(Canvas c,float l,float t,float r,float b,boolean focus){glass(c,l,t,r,b,focus,15);}
+  void pill(Canvas c,String label,float l,float t,float r,float b,boolean active,int color){
+    glass(c,l,t,r,b,active,11);
+    p.setTextSize(15);p.setTypeface(Typeface.create("sans-serif",Typeface.BOLD));
+    float textWidth=p.measureText(label);
+    text(c,label,l+(r-l-textWidth)*.5f,t+(b-t)*.67f,15,active?WHITE:MUTED,true);
+  }
+  void logo(Canvas c,Channel ch,float x,float y,float w,float ht){
+    requestLogo(ch);
+    p.setShader(null);p.setStyle(Paint.Style.FILL);p.setColor(Color.WHITE);p.setAlpha(255);
+    if(ch.logo!=null&&ch.logo.getWidth()>0&&ch.logo.getHeight()>0){
+      float scale=Math.min(w/ch.logo.getWidth(),ht/ch.logo.getHeight());
+      float bw=ch.logo.getWidth()*scale,bh=ch.logo.getHeight()*scale;
+      c.drawBitmap(ch.logo,null,new RectF(x+(w-bw)/2,y+(ht-bh)/2,x+(w+bw)/2,y+(ht+bh)/2),p);
+    }else{
+      fill(c,x,y,x+w,y+ht,0xff18406c,9);
+      fit(c,ch.name,x+6,y+ht*.64f,14,w-12,WHITE,true);
+    }
+  }
+  void drawHeader(Canvas c){
+    glass(c,16,12,1264,95,false,21);
+    fill(c,34,27,92,79,0xfff52a75,14);
+    text(c,"▶",49,65,28,WHITE,true);
+    text(c,"EYMEN",103,63,32,WHITE,true);
+    text(c,"TV",253,63,32,PINK,true);
+    text(c,"CANLI YAYIN  •  KANALLAR  •  TEK UYGULAMA",337,61,17,MUTED,true);
+    line(c,873,34,873,76,0xff356089,2);
+    text(c,time(System.currentTimeMillis()),898,58,24,WHITE,true);
+    fit(c,new SimpleDateFormat("d MMMM EEEE",tr).format(new Date()),995,55,17,248,MUTED,false);
+    line(c,899,74,1238,74,PINK,2);
+  }
+  void drawMenu(Canvas c){
+    glass(c,18,105,404,694,false,20);
+    text(c,"KANAL LİSTESİ",40,146,26,WHITE,true);
+    text(c,visible.isEmpty()?"0 / 0":(selected+1)+" / "+visible.size(),301,146,17,GOLD,true);
+    pill(c,"Tüm Kanallar",38,157,208,196,!favsOnly,PINK);
+    pill(c,"★ Favoriler",215,157,382,196,favsOnly,PINK);
+    final int start=(selected/10)*10;
+    for(int k=0;k<10&&start+k<visible.size();k++){
+      int i=start+k;
+      Channel ch=visible.get(i);
+      float y=205+k*39f;
+      glass(c,34,y,387,y+36,i==selected&&tab==0,9);
+      text(c,ch.num,44,y+24,15,WHITE,true);
+      logo(c,ch,99,y+4,55,28);
+      fit(c,ch.name,161,y+24,17,169,WHITE,true);
+      text(c,favorites.contains(favoriteKey(ch))?"★":"☆",352,y+24,19,
+        favorites.contains(favoriteKey(ch))?GOLD:0xff8498b3,false);
+      if(ch==current){fill(c,374,y+14,380,y+20,BLUE,3);}
+    }
+    if(visible.isEmpty())fit(c,favsOnly?"Favori kanal yok":"Kanal bulunamadı",53,285,20,308,WHITE,false);
+    glass(c,34,599,387,642,tab==2,11);
+    text(c,"⚙  Kanal yönetimi ve ayarlar",47,627,19,WHITE,true);
+    text(c,"◀  Sayfa "+(visible.isEmpty()?0:selected/10+1)+" / "+((visible.size()+9)/10)+"  ▶",50,666,16,MUTED,false);
+    text(c,visible.size()+" kanal",300,666,15,GOLD,true);
+  }
+  void drawProgram(Canvas c){
+    float left=menu?421:34;
+    float top=menu?519:537;
+    glass(c,left,top,1258,682,false,18);
+    if(current==null){
+      text(c,"EYMEN TV",left+22,top+39,24,WHITE,true);
+      fit(c,message.isEmpty()?"Kumandadan bir kanal seçin.":message,left+22,top+79,18,720,MUTED,false);
+      text(c,"EPG • Kanal bilgisi",left+22,top+112,15,BLUE,true);
+      return;
+    }
+    logo(c,current,left+18,top+19,menu?90:110,58);
+    float x=left+(menu?128:151);
+    fit(c,current.name,x,top+35,27,menu?360:620,WHITE,true);
+    fit(c,now==null?"Program bilgisi henüz yok":now.title,x,top+73,21,menu?365:620,PALE,true);
+    text(c,now==null?"EPG yükleniyor":time(now.start)+" - "+time(now.end)+"  •  Devam ediyor",
+      x,top+104,16,BLUE,false);
+    float progress=0f;
+    if(now!=null&&now.end>now.start)
+      progress=Math.max(0,Math.min(1,(System.currentTimeMillis()-now.start)/(float)(now.end-now.start)));
+    float width=menu?365:660;
+    fill(c,x,top+118,x+width,top+125,0xff314565,4);
+    if(progress>0)fill(c,x,top+118,x+width*progress,top+125,PINK,4);
+    if(menu){
+      line(c,990,top+18,990,top+137,0xff335075,1);
+      text(c,"SIRADAKİ",1011,top+34,14,BLUE,true);
+      fit(c,next==null?"Program bilgisi yok":next.title,1011,top+67,17,219,WHITE,true);
+      if(next!=null)text(c,time(next.start)+" - "+time(next.end),1011,top+92,15,MUTED,false);
+    }else{
+      text(c,"Şimdi",x+width+24,top+96,15,GOLD,true);
+    }
+  }
+  void drawPermanentWatermark(Canvas c){
+    if(current==null)return;
+    glass(c,1052,107,1256,152,false,10);
+    text(c,"▣",1062,138,25,PINK,true);
+    text(c,"EYMEN",1094,137,21,WHITE,true);
+    text(c,"TV",1206,137,22,PINK,true);
+  }
+  void drawHourlyLogo(Canvas c){
+    // Preserve existing schedule: rotating branding appears 15 seconds once per 60 minutes.
+    if(brandStartedUptime>0&&current!=null&&!menu){
+      long elapsed=SystemClock.uptimeMillis()-brandStartedUptime;
+      if(elapsed>=0&&elapsed<BRAND_DURATION_MS){
+        long spinMs=(SystemClock.uptimeMillis()-animationStart)%14000L;
+        double angle=spinMs*Math.PI*2/14000.0;
+        float fadeIn=Math.min(1f,elapsed/450f);
+        float fadeOut=Math.min(1f,(BRAND_DURATION_MS-elapsed)/550f);
+        int alpha=(int)(255*Math.max(0f,Math.min(fadeIn,fadeOut)));
+        c.save();c.translate(1137f,226f);
+        c.saveLayerAlpha(-120f,-64f,120f,64f,alpha);
+        c.skew(0f,(float)Math.sin(angle)*.11f);
+        float yaw=(float)Math.cos(angle);
+        c.scale(yaw>=0f?Math.max(.06f,yaw):Math.min(-.06f,yaw),1f);
+        if(brandLogo!=null){
+          p.setShader(null);p.setStyle(Paint.Style.FILL);p.setColor(Color.WHITE);p.setAlpha(255);
+          c.drawBitmap(brandLogo,null,new RectF(-113,-58,113,58),p);
+        }else{
+          text(c,"EYMEN TV",-105,0,29,WHITE,true);
+          text(c,"www.atasoyyazilim.com",-106,35,15,BLUE,true);
+        }
+        c.restore();c.restore();
+      }
+    }
+  }
+  @Override protected void onDraw(Canvas c){
+    super.onDraw(c);c.save();
+    c.scale(getWidth()/1280f,getHeight()/720f);
+    if(menu){drawHeader(c);drawMenu(c);}
+    drawPermanentWatermark(c);
+    if(info||menu)drawProgram(c);
+    if(menu){
+      fit(c,"OK Kanalı aç  •  SAĞ/SOL 10'lu sayfa  •  YEŞİL Favori  •  MENU Ayarlar",
+          435,706,15,800,WHITE,false);
+    }else if(info){
+      fit(c,"OK Kanal listesi  •  YEŞİL Favori  •  MAVİ Ses  •  MENU Ayarlar",
+          44,710,15,1170,WHITE,false);
+    }
+    if(!message.isEmpty()&&current==null){
+      glass(c,428,344,1222,414,false,14);
+      fit(c,message,452,390,18,738,WHITE,false);
+    }else if(!message.isEmpty()&&current!=null){
+      glass(c,430,435,1222,501,false,14);
+      fit(c,message,450,473,18,735,WHITE,false);
+    }
+    if(!digits.isEmpty()){
+      glass(c,1080,165,1245,239,true,13);
+      text(c,digits,1103,214,34,WHITE,true);
+    }
+    drawHourlyLogo(c);
+    c.restore();
+  }
  }
 }
