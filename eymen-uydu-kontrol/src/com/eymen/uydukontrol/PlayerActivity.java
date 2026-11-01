@@ -3,7 +3,7 @@ import android.app.*;import android.os.*;import android.content.*;import android
 public class PlayerActivity extends Activity {
  static class Channel {long id;String name,num,input,originalName;Bitmap logo;boolean logoRequested;}
  static class Program {String title,description;long start,end;}
- private TvView tv;private Overlay ui;private AudioManager audio;private AudioFocusRequest focus;private boolean hasFocus=false,active=false,dead=false,menu=true,info=true,favsOnly=false,loading=false;private int selected=0,tab=0,epoch=0;private String message="Kanallar yükleniyor…",audioState="Henüz ses izi bildirilmedi",digits="";private Channel current;private Program now,next;private final ArrayList<Channel> all=new ArrayList<>(),visible=new ArrayList<>();private final ArrayList<TvTrackInfo> soundTracks=new ArrayList<>();private final Handler h=new Handler(Looper.getMainLooper());private final ExecutorService worker=Executors.newSingleThreadExecutor();private final ExecutorService logoWorker=Executors.newFixedThreadPool(2);private SharedPreferences prefs;private Set<String> favorites,hidden;private long animationStart=SystemClock.uptimeMillis();private final Locale tr=new Locale("tr","TR");private long lastEpg=0;private int opacity=185,hideSeconds=5;private boolean stoppedPlayback=false;private static final int REQUEST_CHANNEL_LOGO=504;private long pendingLogoChannelId=-1;private Bitmap brandLogo;private long brandStartedUptime=-1L;
+ private TvView tv;private Overlay ui;private AudioManager audio;private AudioFocusRequest focus;private boolean hasFocus=false,active=false,dead=false,menu=true,info=true,favsOnly=false,loading=false;private int selected=0,tab=0,epoch=0;private String message="Kanallar yükleniyor…",audioState="Henüz ses izi bildirilmedi",digits="";private Channel current;private Program now,next;private final ArrayList<Channel> all=new ArrayList<>(),visible=new ArrayList<>();private final ArrayList<TvTrackInfo> soundTracks=new ArrayList<>();private final Handler h=new Handler(Looper.getMainLooper());private final ExecutorService worker=Executors.newSingleThreadExecutor();private final ExecutorService logoWorker=Executors.newFixedThreadPool(2);private SharedPreferences prefs;private Set<String> favorites,hidden;private long animationStart=SystemClock.uptimeMillis();private final Locale tr=new Locale("tr","TR");private long lastEpg=0;private int opacity=185,hideSeconds=5;private boolean showChannelLogos=true,showEpg=true,showWatermark=true,hourlyBrandEnabled=true;private boolean stoppedPlayback=false;private static final int REQUEST_CHANNEL_LOGO=504;private long pendingLogoChannelId=-1;private Bitmap brandLogo;private long brandStartedUptime=-1L;
  // Reuse existing timestamp during upgrade to avoid an unexpected immediate brand appearance.
  private static final long BRAND_INTERVAL_MS=3600000L,BRAND_DURATION_MS=15000L;
  private static final String BRAND_LAST_KEY="promo_last_shown_epoch";
@@ -15,7 +15,7 @@ public class PlayerActivity extends Activity {
   h.postDelayed(this,brandStartedUptime>0?40:110);
  }};
  private void checkBrand(){
-  if(!active)return;
+  if(!active||!hourlyBrandEnabled)return;
   long uptime=SystemClock.uptimeMillis();
   if(brandStartedUptime>0){
    if(uptime-brandStartedUptime>=BRAND_DURATION_MS)brandStartedUptime=-1L;
@@ -31,7 +31,7 @@ public class PlayerActivity extends Activity {
   if(!preview)prefs.edit().putLong(BRAND_LAST_KEY,System.currentTimeMillis()).apply();
   ui.invalidate();
  }
- @Override public void onCreate(Bundle b){super.onCreate(b);prefs=getSharedPreferences("eymen_tv",MODE_PRIVATE);favorites=new HashSet<>(prefs.getStringSet("favorites",new HashSet<String>()));hidden=new HashSet<>(prefs.getStringSet("hidden",new HashSet<String>()));opacity=prefs.getInt("opacity",185);hideSeconds=prefs.getInt("hideSeconds",5);getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);getWindow().getDecorView().setSystemUiVisibility(5894);setVolumeControlStream(AudioManager.STREAM_MUSIC);
+ @Override public void onCreate(Bundle b){super.onCreate(b);prefs=getSharedPreferences("eymen_tv",MODE_PRIVATE);favorites=new HashSet<>(prefs.getStringSet("favorites",new HashSet<String>()));hidden=new HashSet<>(prefs.getStringSet("hidden",new HashSet<String>()));opacity=prefs.getInt("opacity",185);hideSeconds=prefs.getInt("hideSeconds",5);showChannelLogos=prefs.getBoolean("channelLogos",true);showEpg=prefs.getBoolean("showEpg",true);showWatermark=prefs.getBoolean("showWatermark",true);hourlyBrandEnabled=prefs.getBoolean("hourlyBrand",true);getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);getWindow().getDecorView().setSystemUiVisibility(5894);setVolumeControlStream(AudioManager.STREAM_MUSIC);
  audio=(AudioManager)getSystemService(AUDIO_SERVICE);focus=new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MOVIE).build()).setOnAudioFocusChangeListener(change->{hasFocus=change==AudioManager.AUDIOFOCUS_GAIN;if(tv!=null)tv.setStreamVolume(hasFocus?1f:0f);if(change==AudioManager.AUDIOFOCUS_LOSS){tv.reset();stoppedPlayback=true;message="Ses odağı başka uygulamaya geçti; OK ile yeniden aç.";ui.invalidate();}},h).build();
  FrameLayout root=new FrameLayout(this);root.setBackgroundColor(Color.BLACK);tv=new TvView(this);tv.setFocusable(false);root.addView(tv,new FrameLayout.LayoutParams(-1,-1));ui=new Overlay();root.addView(ui,new FrameLayout.LayoutParams(-1,-1));setContentView(root);ui.setFocusable(true);ui.setFocusableInTouchMode(true);ui.requestFocus();try(InputStream logo=getAssets().open("brand_3d.png")){
   brandLogo=BitmapFactory.decodeStream(logo);
@@ -253,9 +253,9 @@ public class PlayerActivity extends Activity {
     text(c,label,l+(r-l-textWidth)*.5f,t+(b-t)*.67f,15,active?WHITE:MUTED,true);
   }
   void logo(Canvas c,Channel ch,float x,float y,float w,float ht){
-    requestLogo(ch);
+    if(showChannelLogos)requestLogo(ch);
     p.setShader(null);p.setStyle(Paint.Style.FILL);p.setColor(Color.WHITE);p.setAlpha(255);
-    if(ch.logo!=null&&ch.logo.getWidth()>0&&ch.logo.getHeight()>0){
+    if(showChannelLogos&&ch.logo!=null&&ch.logo.getWidth()>0&&ch.logo.getHeight()>0){
       float scale=Math.min(w/ch.logo.getWidth(),ht/ch.logo.getHeight());
       float bw=ch.logo.getWidth()*scale,bh=ch.logo.getHeight()*scale;
       c.drawBitmap(ch.logo,null,new RectF(x+(w-bw)/2,y+(ht-bh)/2,x+(w+bw)/2,y+(ht+bh)/2),p);
@@ -333,7 +333,7 @@ public class PlayerActivity extends Activity {
     }
   }
   void drawPermanentWatermark(Canvas c){
-    if(current==null)return;
+    if(current==null||!showWatermark)return;
     glass(c,1052,107,1256,152,false,10);
     text(c,"▣",1062,138,25,PINK,true);
     text(c,"EYMEN",1094,137,21,WHITE,true);
@@ -370,7 +370,7 @@ public class PlayerActivity extends Activity {
     c.scale(getWidth()/1280f,getHeight()/720f);
     if(menu){drawHeader(c);drawMenu(c);}
     drawPermanentWatermark(c);
-    if(info||menu)drawProgram(c);
+    if((info||menu)&&showEpg)drawProgram(c);
     if(menu){
       fit(c,"OK Kanalı aç  •  SAĞ/SOL 10'lu sayfa  •  YEŞİL Favori  •  MENU Ayarlar",
           435,706,15,800,WHITE,false);
