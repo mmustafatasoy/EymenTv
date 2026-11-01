@@ -174,7 +174,7 @@ class Playback(private val ctx: Context, private val app: AppState) {
             }
         })
         try {
-            tvView.tune(ch.inputId, TvContract.buildChannelUri(ch.tvId))
+            tvView.tune(ch.inputId ?: "", TvContract.buildChannelUri(ch.tvId))
             tvView.setStreamVolume(1f)
         } catch (e: Exception) {
             status = "Kanal açılamadı: ${e.message ?: e.javaClass.simpleName}"
