@@ -675,7 +675,7 @@ class AppState(val activity: MainActivity) {
 
     // ---------------------------------------------------------------- internet list
 
-    fun setM3uUrl(url: String) {
+    fun saveM3uUrl(url: String) {
         m3uUrl = url.trim()
         prefs.putStr("m3uUrl", if (m3uUrl.isEmpty()) null else m3uUrl)
         if (m3uUrl.isNotEmpty()) refreshOnline(true)
@@ -999,7 +999,7 @@ class AppState(val activity: MainActivity) {
                 prefs.putBool("autoOnline", autoOnline)
             },
             SettingItem("M3U liste adresi", if (m3uUrl.isBlank()) "Girilmedi" else shorten(m3uUrl)) {
-                pushDialog(Dialog.TextInput("M3U liste adresi", m3uUrl, "Adresi yaz veya telefon kumandasından gönder") { setM3uUrl(it) })
+                pushDialog(Dialog.TextInput("M3U liste adresi", m3uUrl, "Adresi yaz veya telefon kumandasından gönder") { saveM3uUrl(it) })
             },
             SettingItem("USB'den M3U dosyası seç") { importM3uFile() },
             SettingItem("İnternet listesini yenile") { refreshOnline(true) },
