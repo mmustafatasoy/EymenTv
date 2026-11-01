@@ -178,7 +178,65 @@ public class PlayerActivity extends Activity {
  })
  .setNegativeButton("Vazgeç",null).show();
  }
- private void settings(){new AlertDialog.Builder(this).setTitle("EYMEN TV • Uygulama ayarları").setItems(new String[]{"Seçili kanalı düzenle / logo / sil","Toplu kanal sil (işaretleyerek)","Silinen kanalları geri getir","Tüm kanallar / Favoriler","Görünüm, ses ve diğer ayarlar"},(d,w)->{if(w==0)editChannel();else if(w==1)bulkHideChannels();else if(w==2){hidden.clear();prefs.edit().remove("hidden").apply();filter();ui.invalidate();toast("Silinen kanallar geri getirildi");}else if(w==3){favsOnly=!favsOnly;selected=0;tab=0;filter();ui.invalidate();}else options();}).show();}
+ private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
+ private android.graphics.drawable.GradientDrawable menuBackground(int fill,int edge){
+   android.graphics.drawable.GradientDrawable shape=new android.graphics.drawable.GradientDrawable();
+   shape.setColor(fill);shape.setCornerRadius(dp(13));shape.setStroke(dp(1),edge);return shape;
+ }
+ private void neonMenu(String title,String[] rows,DialogInterface.OnClickListener action){
+   LinearLayout shell=new LinearLayout(this);shell.setOrientation(LinearLayout.VERTICAL);
+   shell.setPadding(dp(16),dp(18),dp(16),dp(12));
+   shell.setBackground(menuBackground(0xff08162e,0xff16b2e4));
+   TextView heading=new TextView(this);heading.setText("▣  "+title);
+   heading.setTextSize(22);heading.setTextColor(Color.WHITE);
+   heading.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+   heading.setPadding(dp(7),0,dp(7),dp(8));shell.addView(heading);
+   TextView help=new TextView(this);help.setText("OK ile seç  •  ▲ ▼ ile gez  •  Geri ile kapat");
+   help.setTextSize(12);help.setTextColor(0xff94d8f2);
+   help.setPadding(dp(8),0,dp(8),dp(9));shell.addView(help);
+   ListView list=new ListView(this);
+   list.setDivider(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+   list.setDividerHeight(dp(4));list.setCacheColorHint(Color.TRANSPARENT);
+   list.setSelector(menuBackground(0xff641d64,0xffff3c9b));
+   list.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,rows){
+     @Override public View getView(int position,View recycled,ViewGroup parent){
+       TextView row=(TextView)super.getView(position,recycled,parent);
+       row.setTextColor(Color.WHITE);row.setTextSize(16);
+       row.setPadding(dp(17),dp(10),dp(12),dp(10));
+       row.setMinHeight(dp(51));row.setGravity(Gravity.CENTER_VERTICAL);
+       row.setBackground(menuBackground(0xff102749,0xff315987));
+       return row;
+     }
+   });
+   shell.addView(list,new LinearLayout.LayoutParams(-1,dp(Math.min(470,rows.length*55))));
+   AlertDialog dialog=new AlertDialog.Builder(this).setView(shell)
+     .setNegativeButton("Kapat",(d,w)->{}).create();
+   list.setOnItemClickListener((parent,view,pos,id)->{dialog.dismiss();action.onClick(dialog,pos);});
+   dialog.setOnShowListener(d->{
+     Window win=dialog.getWindow();
+     if(win!=null){win.setBackgroundDrawableResource(android.R.color.transparent);
+       win.setLayout(Math.min(dp(850),getResources().getDisplayMetrics().widthPixels-dp(36)),-2);}
+     list.requestFocus();list.setSelection(0);
+     Button close=dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+     if(close!=null){close.setTextColor(0xff36c8ef);close.setAllCaps(false);}
+   });
+   dialog.show();
+ }
+ private void settings(){
+   neonMenu("EYMEN TV • KANAL YÖNETİMİ",new String[]{
+     "✎  Kanal düzenle / kendi logosunu yükle",
+     "☑  Toplu kanal sil (işaretleyerek)",
+     "↶  Silinen kanalları geri getir",
+     "★  Tüm kanallar / Favoriler",
+     "⚙  Genel görünüm ve ses ayarları"
+   },(d,w)->{
+     if(w==0)editChannel();
+     else if(w==1)bulkHideChannels();
+     else if(w==2){hidden.clear();prefs.edit().remove("hidden").apply();filter();ui.invalidate();toast("Silinen kanallar geri getirildi");}
+     else if(w==3){favsOnly=!favsOnly;selected=0;tab=0;filter();ui.invalidate();}
+     else options();
+   });
+ }
  private String favoriteKey(Channel c){return c.input+"|"+c.num+"|"+c.originalName;}
  private void filter(){visible.clear();for(Channel c:all)if(!hidden.contains(String.valueOf(c.id))&&(!favsOnly||favorites.contains(favoriteKey(c))))visible.add(c);selected=Math.max(0,Math.min(selected,visible.size()-1));}
  private void toggleFavorite(){Channel c=menu&&!visible.isEmpty()?visible.get(selected):current;if(c==null)return;String k=favoriteKey(c);if(!favorites.remove(k))favorites.add(k);prefs.edit().putStringSet("favorites",new HashSet<>(favorites)).apply();filter();ui.invalidate();}
@@ -196,7 +254,49 @@ public class PlayerActivity extends Activity {
  private void showInfo(){info=true;h.removeCallbacks(hide);if(!menu)h.postDelayed(hide,hideSeconds*1000L);ui.invalidate();}
  private void toast(String s){Toast.makeText(this,s,Toast.LENGTH_SHORT).show();}
  private void soundDialog(){ArrayList<String> labels=new ArrayList<>();for(TvTrackInfo t:soundTracks)labels.add((t.getLanguage()==null?"Dil belirtilmemiş":t.getLanguage())+" • "+t.getAudioChannelCount()+" kanal • "+t.getId());if(labels.isEmpty()){new AlertDialog.Builder(this).setTitle("Ses tanılama").setMessage(audioState+"\nSistem medya sesi: "+audio.getStreamVolume(AudioManager.STREAM_MUSIC)+" / "+audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC)+"\nSessiz: "+audio.isStreamMute(AudioManager.STREAM_MUSIC)+"\nOrijinal Uydu uygulamasında aynı kanalı karşılaştırın.").setPositiveButton("Tamam",null).show();return;}new AlertDialog.Builder(this).setTitle("Ses izi seç • "+(hasFocus?"Odak alındı":"Odak alınamadı")).setItems(labels.toArray(new String[0]),(d,w)->{try{hasFocus=audio.requestAudioFocus(focus)==AudioManager.AUDIOFOCUS_REQUEST_GRANTED;tv.selectTrack(TvTrackInfo.TYPE_AUDIO,soundTracks.get(w).getId());tv.setStreamVolume(hasFocus?1:0);toast("Ses izi seçildi; sesi kontrol edin.");}catch(Exception e){toast(e.toString());}}).setNegativeButton("Kapat",null).show();}
- private void options(){new AlertDialog.Builder(this).setTitle("EYMEN TV • Seçenekler").setItems(new String[]{"Favoriye ekle / çıkar","Ses izi seç ve tanılama","Program ayrıntıları","Menü şeffaflığı","Bilgi çubuğu süresi","Kanal listesini yenile","İzin ayarları","Hakkında","Sağ üst logo ve web adresini göster (test)"},(d,w)->{switch(w){case 0:toggleFavorite();break;case 1:soundDialog();break;case 2:details();break;case 3:new AlertDialog.Builder(this).setTitle("Menü yoğunluğu").setSingleChoiceItems(new String[]{"Hafif","Dengeli","Koyu"},opacity<170?0:opacity<215?1:2,(a,n)->{opacity=new int[]{145,185,225}[n];prefs.edit().putInt("opacity",opacity).apply();ui.invalidate();a.dismiss();}).show();break;case 4:new AlertDialog.Builder(this).setTitle("Bilgi çubuğu süresi").setItems(new String[]{"3 saniye","5 saniye","8 saniye"},(a,n)->{hideSeconds=new int[]{3,5,8}[n];prefs.edit().putInt("hideSeconds",hideSeconds).apply();showInfo();}).show();break;case 5:loadChannels();break;case 6:startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,android.net.Uri.parse("package:"+getPackageName())));break;case 8:menu=false;info=false;startBrand(true);break;default:new AlertDialog.Builder(this).setTitle("EYMEN TV v0.11 • Cihaz denemesi").setMessage("Muhammet Atasoy\natasoyyazılım.com\nDahili DTVKit yayını • İnternetsiz\nÖzel kanal logoları: dosyadan yüklenebilir\n"+audioState+"\nSes düzeltmeleri cihazda doğrulanmalıdır.").setPositiveButton("Tamam",null).show();}}).show();}
+ private void options(){
+  neonMenu("EYMEN TV • GENEL AYARLAR",new String[]{
+    "▣  Kanal logoları: "+(showChannelLogos?"Açık":"Kapalı"),
+    "▤  EPG program bilgileri: "+(showEpg?"Açık":"Kapalı"),
+    "◉  Sağ köşe EYMEN TV logosu: "+(showWatermark?"Açık":"Kapalı"),
+    "◷  Saatlik web adresi ve logo: "+(hourlyBrandEnabled?"Açık":"Kapalı"),
+    "★  Favoriye ekle / çıkar",
+    "◖  Ses izi seç / tanılama",
+    "≡  Program ayrıntıları",
+    "▥  Menü şeffaflığı",
+    "◴  Bilgi çubuğu süresi",
+    "⟳  Kanal listesini yenile",
+    "⚿  İzin ayarları",
+    "ⓘ  Hakkında",
+    "▶  Sağ üst logo ve web adresini göster (test)"
+  },(d,w)->{
+    switch(w){
+      case 0:showChannelLogos=!showChannelLogos;prefs.edit().putBoolean("channelLogos",showChannelLogos).apply();ui.invalidate();break;
+      case 1:showEpg=!showEpg;prefs.edit().putBoolean("showEpg",showEpg).apply();ui.invalidate();break;
+      case 2:showWatermark=!showWatermark;prefs.edit().putBoolean("showWatermark",showWatermark).apply();ui.invalidate();break;
+      case 3:hourlyBrandEnabled=!hourlyBrandEnabled;
+        prefs.edit().putBoolean("hourlyBrand",hourlyBrandEnabled).apply();
+        if(!hourlyBrandEnabled)brandStartedUptime=-1L;ui.invalidate();break;
+      case 4:toggleFavorite();break;
+      case 5:soundDialog();break;
+      case 6:details();break;
+      case 7:new AlertDialog.Builder(this).setTitle("Menü yoğunluğu")
+        .setSingleChoiceItems(new String[]{"Hafif","Dengeli","Koyu"},opacity<170?0:opacity<215?1:2,
+        (a,n)->{opacity=new int[]{145,185,225}[n];prefs.edit().putInt("opacity",opacity).apply();ui.invalidate();a.dismiss();}).show();break;
+      case 8:new AlertDialog.Builder(this).setTitle("Bilgi çubuğu süresi")
+        .setItems(new String[]{"3 saniye","5 saniye","8 saniye"},
+        (a,n)->{hideSeconds=new int[]{3,5,8}[n];prefs.edit().putInt("hideSeconds",hideSeconds).apply();showInfo();}).show();break;
+      case 9:loadChannels();break;
+      case 10:startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        android.net.Uri.parse("package:"+getPackageName())));break;
+      case 12:menu=false;info=false;startBrand(true);break;
+      default:new AlertDialog.Builder(this).setTitle("EYMEN TV • Hakkında")
+        .setMessage("Atasoy Yazılım\nwww.atasoyyazilim.com\n"+audioState+
+          "\nTV tuner erişimi ve ses desteği cihaz üreticisine göre değişebilir.")
+        .setPositiveButton("Tamam",null).show();
+    }
+  });
+ }
  private void details(){new AlertDialog.Builder(this).setTitle(now==null?"Program bilgisi":now.title).setMessage(now==null?"Bu kanal için güncel yayın bilgisi bulunamadı.":time(now.start)+" – "+time(now.end)+"\n\n"+(now.description==null?"Açıklama bulunamadı.":now.description)).setPositiveButton("Kapat",null).show();}
  private void step(int delta){ArrayList<Channel> data=visible;if(data.isEmpty()){toast("Bu listede kanal yok");return;}int i=data.indexOf(current);if(i<0)i=delta>0?-1:0;i=(i+delta+data.size())%data.size();play(data.get(i));selected=Math.max(0,visible.indexOf(current));}
  @Override public boolean onKeyDown(int key,KeyEvent e){if(key>=KeyEvent.KEYCODE_0&&key<=KeyEvent.KEYCODE_9){if(digits.length()>=4)digits="";digits+=key-KeyEvent.KEYCODE_0;h.removeCallbacks(enterNumber);h.postDelayed(enterNumber,1500);ui.invalidate();return true;}switch(key){case KeyEvent.KEYCODE_DPAD_UP:if(menu){if(tab==2){tab=0;selected=Math.max(0,Math.min(visible.size()-1,(selected/10)*10+9));}else if(selected%10==0)tab=1;else selected--;}else step(-1);break;case KeyEvent.KEYCODE_DPAD_DOWN:if(menu){if(tab==1)tab=0;else if(tab==0&&(selected%10==9||selected==visible.size()-1))tab=2;else if(tab==0)selected=Math.min(visible.size()-1,selected+1);}else step(1);break;case KeyEvent.KEYCODE_DPAD_LEFT:case KeyEvent.KEYCODE_DPAD_RIGHT:if(menu){selected=PageNav.jump(selected,visible.size(),key==KeyEvent.KEYCODE_DPAD_RIGHT?1:-1);tab=0;}else{menu=true;info=true;}break;case KeyEvent.KEYCODE_DPAD_CENTER:case KeyEvent.KEYCODE_ENTER:if(!digits.isEmpty()){h.removeCallbacks(enterNumber);enterNumber.run();}else if(menu){if(tab==2){settings();}else if(tab==1){favsOnly=!favsOnly;filter();}else if(!visible.isEmpty()){play(visible.get(selected));menu=false;showInfo();}}else{menu=true;info=true;selected=Math.max(0,visible.indexOf(current));}break;case KeyEvent.KEYCODE_CHANNEL_UP:step(1);break;case KeyEvent.KEYCODE_CHANNEL_DOWN:step(-1);break;case KeyEvent.KEYCODE_MENU:settings();break;case KeyEvent.KEYCODE_PROG_GREEN:case KeyEvent.KEYCODE_BOOKMARK:toggleFavorite();break;case KeyEvent.KEYCODE_PROG_BLUE:soundDialog();break;case KeyEvent.KEYCODE_INFO:case KeyEvent.KEYCODE_PROG_YELLOW:if(info&&!menu)details();else showInfo();break;case KeyEvent.KEYCODE_PROG_RED:menu=!menu;showInfo();break;case KeyEvent.KEYCODE_BACK:if(menu){menu=false;showInfo();}else new AlertDialog.Builder(this).setTitle("EYMEN TV kapatılsın mı?").setPositiveButton("Çık",(d,w)->finish()).setNegativeButton("İzlemeye devam et",null).show();break;default:return super.onKeyDown(key,e);}ui.invalidate();return true;}
