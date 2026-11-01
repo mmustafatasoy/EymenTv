@@ -7,7 +7,7 @@ checks={
  '15-second appearance':'BRAND_DURATION_MS=15000L',
  'brand only when TV channel is playing':'if(current==null||menu)return;',
  'corner branding obeys visible program':'brandStartedUptime>0&&current!=null&&!menu',
- 'right-side placement':'c.translate(1137f,80f)',
+ 'right-side placement':'c.translate(1137f,226f)',
  '3D rotating icon':'spinMs*Math.PI*2/14000.0',
  'packaged logo':'getAssets().open("brand_3d.png")',
  'website text fallback':'www.atasoyyazilim.com',
@@ -15,7 +15,7 @@ checks={
  'old timer reused on update':'BRAND_LAST_KEY="promo_last_shown_epoch"',
  'first display only after one hour':'if(lastBrand<=0||lastBrand>System.currentTimeMillis())',
  'manual logo preview':'Sağ üst logo ve web adresini göster (test)',
- 'new version':'android:versionName="0.11"'
+ 'new version':'android:versionName="0.12"'
 }
 for name,token in checks.items():
  assert token in (manifest if name=='new version' else s), name

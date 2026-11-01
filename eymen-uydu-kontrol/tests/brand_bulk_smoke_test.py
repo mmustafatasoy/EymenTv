@@ -1,7 +1,7 @@
 from pathlib import Path
 p=Path(__file__).resolve().parents[1]
 s=(p/'src/com/eymen/uydukontrol/PlayerActivity.java').read_text(encoding='utf-8')
-assert 'android:versionName="0.11"' in (p/'AndroidManifest.xml').read_text(encoding='utf-8')
+assert 'android:versionName="0.12"' in (p/'AndroidManifest.xml').read_text(encoding='utf-8')
 must=['setMultiChoiceItems(labels,checked','if(checked[i])ids.add(String.valueOf(candidates.get(i).id))',
       'hidden.addAll(ids);','setTitle(ids.size()+" kanal silinsin mi?")',
       'Toplu kanal sil (işaretleyerek)','Silinen kanalları geri getir',

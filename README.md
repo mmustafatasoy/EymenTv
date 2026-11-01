@@ -1,45 +1,27 @@
-# EYMEN TV — Uydu Kanal Listesi
+# EYMEN TV v0.12 — Neon Android TV Arayüzü
 
-EYMEN TV, Android TV uyumlu cihazlar için geliştirilen uydu/TV kanal listesi uygulamasıdır. Eski launcher projesi iptal edildi; bu depo yalnızca TV kanal uygulamasını içerir.
+Bu sürüm, önceki tanıtım görsellerine yakın **gerçek uygulama arayüzü** sunmak için Android Canvas çizimlerini değiştirir. Tanıtım görselleri birebir ekran kaydı değildir; yayın görüntüsü yalnızca televizyonun izin verdiği gerçek tuner kaynağından gelir.
 
-## 📥 Android TV APK — v0.11
+## Tasarım yenilikleri
 
-**[⬇ EYMEN TV v0.11 APK](https://github.com/mmustafatasoy/EymenTv/releases/tag/uydu-tv-v0.11)**
+- TV ekranında koyu lacivert, neon mavi ve pembe kanal listesi, seçili kanal çerçevesi, kanal logoları ve sayfa göstergesi
+- Gerçek EPG bilgisi varsa mevcut program, yayın ilerleme çubuğu ve sıradaki program
+- Sağ üstte kalıcı, küçük EYMEN TV metin/logosu; daha önceki dönen logo ve web adresi **saatte bir 15 saniyelik tanıtım** olarak çalışmaya devam eder
+- Kumandayla gezilebilen neon koyu renkli **Kanal Yönetimi / Genel Ayarlar** menüsü
+- Kanal logoları, EPG, köşe logosu ve saatlik tanıtım için çalışan aç/kapat seçenekleri; tercihler TV üzerinde saklanır
+- Fotoğraflı alt reklam kaldırılmış olarak kalır
 
-Bu depo **Private** olduğundan sürümü görüntülemek için yetkili GitHub hesabıyla oturum açmak gerekir. v0.10 ve eski sürümler Releases bölümünde korunur.
+## Kanal özellikleri
 
-### V0.11 — Büyük reklam kaldırıldı
+10 kanallık sayfalar, sağ/sol kumanda geçişi, favoriler, kanal adını ve logosunu düzenleme, işaretleyerek toplu silme / geri getirme, mevcut ses izi seçimi ve TV Input Framework erişimi korunmuştur. İzinler TV üreticisinin kısıtlamalarına bağlıdır.
 
-- Yayının altında görünen fotoğraflı, telefon numaralı, isimli **tam genişlikte reklam bandı tamamen kaldırıldı**. Bu bandın fotoğraf ve reklam logosu da APK paketinden çıkarıldı.
-- Sağ üst köşedeki şeffaf **EYMEN TV** logosu ve **www.atasoyyazilim.com** web adresi korundu.
-- Sağ üst logo **sürekli görünmez**: Uygulama içinde bir kanalın yayını açıkken, menü kapalıyken, **her 60 dakikada bir 15 saniye** boyunca belirir; ardından kaybolur.
-- Son otomatik gösterim zamanı yerel olarak saklanır; TV/uygulama yeniden başlatıldığında süre sıfırlanmaz. İlk kurulumdan sonra ilk otomatik gösterim için 60 dakika beklenir.
-- Elle deneme: **MENU → Uygulama ayarları → Görünüm, ses ve diğer ayarlar → Sağ üst logo ve web adresini göster (test)**.
-- Reklam, fotoğraf, telefon, isim veya aşağıdan kayan bir tanıtım bandı artık yayın üzerinde gösterilmez.
-- 10 kanallık sayfalar, sağ/sol kumandayla sayfa geçişi, kanal ekleme/düzenleme, çoklu kanal silme ve geri getirme, favoriler, kanal logoları, bilgi katmanı ve ses yönetimi korunur.
+## APK sürümleri
 
-## TV cihaz desteği ve sınırlamalar
+- **v0.12**: GitHub Releases: https://github.com/mmustafatasoy/EymenTv/releases/tag/uydu-tv-v0.12
+- **v0.11**: https://github.com/mmustafatasoy/EymenTv/releases/tag/uydu-tv-v0.11
 
-- Whale/DTVKit üzerinden erişilebilen kanallar öncelikli kullanılır.
-- DTVKit bulunmayan Android TV modellerinde (ör. bazı Vestel cihazlarında) `TvContract.Channels` üzerinden **yalnızca cihazın erişime açtığı** kanallar listelenebilir.
-- Üretici TV Input Framework izinlerini kapatmışsa uygulama sistem tunerine veya ses/video akışına erişemeyebilir. Cihazda gerçek oynatma testi gerekir.
-- **TV'nin gerçek kanal veritabanını silmez.** Kanal gizleme ve geri getirme yalnızca EYMEN TV'nin yerel listesinde geçerlidir.
-- Uygulama Android TV test derlemesidir. Kurulu APK ile yeni APK farklı imzalıysa güncelleme kurulamaması mümkündür.
+Ana depo özel ise GitHub hesabıyla oturum açılması gerekir. Bu linkler yönetici içindir; halka açık uygulama kataloglarında özel proje deposu URL'si paylaşılmamalıdır.
 
-## Derleme ve test
+## Test ve derleme
 
-- Kod: `eymen-uydu-kontrol/`
-- `AndroidManifest.xml`: versionCode 12, versionName 0.11
-- Java 17, Android API 33 derleme araçları
-- `build.sh` → `build/EYMEN-TV-0.11.apk`
-- Testler: `tests/PageNavTest.java`, `tests/cross_tv_smoke_test.py`, `tests/brand_bulk_smoke_test.py`, `tests/promo_smoke_test.py`
-- GitHub Actions: **Build EYMEN Uydu TV — Kanal Listesi**. Test ve APK derlemesi başarılı olduğunda `uydu-tv-v0.11` etiketiyle GitHub Releases'e yükler.
-- 3D köşe logo kaynağı `assets/brand_3d.svg` ve bundan oluşturulan `assets/brand_3d.png` dosyasıdır; 8K PNG logo ayrı Release varlığı olarak yayımlanır.
-
-## Sürüm geçmişi
-
-- **v0.11:** Tam ekran reklam kaldırıldı, sağ üst logo ve adres saatte bir 15 saniye görünür.
-- **v0.10:** 3D logo, toplu kanal silme, TV marka uyumluluğu ve alt bant promosyonu.
-- **v0.5 / v0.4:** İlk kanal listesi ve kumanda denemeleri. Releases üzerinde mevcut olan önceki sürümler silinmez.
-
-**Geliştirici:** Muhammet Atasoy — EYMEN TV
+GitHub Actions `.github/workflows/build.yml` Android Java derleme, kanal gezinme ve yeni arayüz regresyon testlerini çalıştırır. Bunların başarılı olması fiziksel TV'de görüntü/ses/tuner davranışının doğrulandığı anlamına gelmez. Gerçek televizyon üzerinden ayrıca test gerekir.
