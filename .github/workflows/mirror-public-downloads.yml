@@ -1,0 +1,66 @@
+name: Mirror EYMEN TV APK files to public Atasoy Downloads
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish-apk-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PRIVATE_READ_TOKEN: ${{ github.token }}
+      PUBLIC_PUBLISH_TOKEN: ${{ secrets.ATASOY_DOWNLOADS_TOKEN }}
+      PUBLIC_REPO: mmustafatasoy/atasoyyazilim-downloads
+    steps:
+      - name: Require scoped public download publisher access
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$PUBLIC_PUBLISH_TOKEN" ]; then
+            echo "::error::ATASOY_DOWNLOADS_TOKEN Actions secret gerekli: public atasoyyazilim-downloads depoya sadece Contents Read and write yetkisi verin."
+            exit 1
+          fi
+
+      - name: Mirror APK assets only, never source repositories
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/eymen-publish
+          for version in 0.4 0.5 0.6 0.7 0.8 0.9 0.10 0.11 0.12; do
+            source_tag="uydu-tv-v$version"
+            public_tag="eymen-tv-v$version"
+            work="/tmp/eymen-publish/$version"
+            mkdir -p "$work"
+
+            GH_TOKEN="$PRIVATE_READ_TOKEN" gh release download "$source_tag" \
+              --repo "$GITHUB_REPOSITORY" --pattern '*.apk' --dir "$work"
+
+            apk="$work/EYMEN-TV-Kanal-Listesi-v$version.apk"
+            if [ ! -s "$apk" ]; then
+              echo "::error::Expected APK is missing: $source_tag"
+              exit 1
+            fi
+            unzip -t "$apk" >/dev/null
+            ( cd "$work" && sha256sum "$(basename "$apk")" > SHA256SUMS.txt )
+            info="EYMEN TV v$version - Android TV APK.
+            
+            Public APK file distribution only; source code is not published.
+            TV tuner playback, audio and EPG depend on manufacturer permissions.
+            Signing keys may differ between versions. Back up app data before reinstalling."
+            if GH_TOKEN="$PUBLIC_PUBLISH_TOKEN" gh release view "$public_tag" \
+              --repo "$PUBLIC_REPO" >/dev/null 2>&1; then
+              echo "Already published $public_tag - preserving existing assets"
+            else
+              GH_TOKEN="$PUBLIC_PUBLISH_TOKEN" gh release create "$public_tag" \
+                "$apk" "$work/SHA256SUMS.txt" --repo "$PUBLIC_REPO" \
+                --title "EYMEN TV v$version - Android TV APK" \
+                --notes "$info" --prerelease
+            fi
+            GH_TOKEN="$PUBLIC_PUBLISH_TOKEN" gh release view "$public_tag" \
+              --repo "$PUBLIC_REPO" --json assets --jq \
+              '.assets[] | select(.name | endswith(".apk")) | select(.size > 0) | .browserDownloadUrl' \
+              | grep -F "https://github.com/$PUBLIC_REPO/releases/download/$public_tag/"
+          done
