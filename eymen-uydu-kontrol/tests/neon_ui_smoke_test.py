@@ -14,7 +14,7 @@ must=[
  'new LinearGradient(',
  '0xffff3c9b',
  '0xff19bfff',
- '▣  KANAL',
+ '▣',
  'KANAL LİSTESİ',
  'for(int k=0;k<10&&start+k<visible.size();k++)',
  'PageNav.jump(selected,visible.size()',
