@@ -98,8 +98,8 @@ jobs:
           export TV_ANDROID_JAR="$ANDROID_HOME/platforms/android-33/android.jar"
           export TV_BUILD_TOOLS="$ANDROID_HOME/build-tools/33.0.2"
           bash build.sh
-          test -s build/EYMEN-TV-0.11.apk
-          ls -lh build/EYMEN-TV-0.11.apk
+          test -s build/EYMEN-TV-0.12.apk
+          ls -lh build/EYMEN-TV-0.12.apk
 
       - name: Commit channel source and remove temporary packed archive
         if: github.event_name != 'pull_request'
@@ -125,7 +125,7 @@ jobs:
       - name: Verify no advertisement and hourly top-right logo plus website
         run: python3 eymen-uydu-kontrol/tests/promo_smoke_test.py
 
-      - name: Publish EYMEN TV v0.11 without advertising banner
+      - name: Publish EYMEN TV v0.12 neon interface
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -133,10 +133,10 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp eymen-uydu-kontrol/build/EYMEN-TV-0.11.apk dist/EYMEN-TV-Kanal-Listesi-v0.11.apk
-          test -s dist/EYMEN-TV-Kanal-Listesi-v0.11.apk
+          cp eymen-uydu-kontrol/build/EYMEN-TV-0.12.apk dist/EYMEN-TV-Kanal-Listesi-v0.12.apk
+          test -s dist/EYMEN-TV-Kanal-Listesi-v0.12.apk
           cat > /tmp/eymen-release-notes.md <<'NOTES'
-          # EYMEN TV — Uydu Kanal Listesi v0.11
+          # EYMEN TV — Uydu Kanal Listesi v0.12
 
           - **Tam ekran genişliğindeki alt bant reklam ve fotoğraf/telefon/isim promosyonu kaldırıldı.**
           - Sağ üstteki şeffaf 3D EYMEN TV logosu ve atasoyyazilim.com adresi korunur.
@@ -145,21 +145,24 @@ jobs:
           - MENU → Uygulama ayarları → Görünüm, ses ve diğer ayarlar → **Sağ üst logo ve web adresini göster (test)** ile önizleme yapılabilir.
           - 10 kanallık sayfalar, kumanda gezinmesi, kanal ses izinleri, toplu seçerek silme, geri getirme ve kanal logoları değiştirilmedi.
           - Kaynak kod ve TV ekranındaki geniş reklam görselleri APK paketinden çıkarıldı.
-          - Eski v0.10 ve önceki sürümler GitHub Releases içinde ayrı korunur.
+          - **Yeni tasarım:** Gerçek kanal ekranında koyu lacivert katmanlar, neon pembe/mavi seçim çerçeveleri, kanal logosu kartları, program bilgisi ve sürüm etiketleri.
+          - **Yeni kumandalı ayarlar:** Koyu tema menüsü ve kanal logoları / EPG / sağ üst logo / saatlik web adresi için aktif aç-kapat seçenekleri.
+          - TV yayını gerçek tuner kaynağından gelir; tanıtım görsellerindeki videolar taklit edilmez.
+          - Önceki v0.11 ve v0.10 APK sürümleri GitHub Releases içinde ayrı korunur.
 
           **Bu APK yalnızca Android uyumlu TV'lerde test sürümüdür.** DTVKit, Vestel ve Whale TV üzerinde kanal oynatma ve ses izni cihaz üreticisi tarafından sınırlandırılabilir. Eski kurulumla imza uyuşmazsa yükleme/güncelleme başarısız olabilir.
           NOTES
-          if ! gh release view uydu-tv-v0.11 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create uydu-tv-v0.11 dist/EYMEN-TV-Kanal-Listesi-v0.11.apk dist/EYMEN-TV-Logo-8K.png \
+          if ! gh release view uydu-tv-v0.12 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create uydu-tv-v0.12 dist/EYMEN-TV-Kanal-Listesi-v0.12.apk dist/EYMEN-TV-Logo-8K.png \
               --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "EYMEN TV — v0.11 • Reklamsız, Saatlik Köşe Logosu" \
+              --title "EYMEN TV — v0.12 • Neon Tasarım ve Kumandalı Ayarlar" \
               --notes-file /tmp/eymen-release-notes.md \
               --latest
           else
-            gh release upload uydu-tv-v0.11 dist/EYMEN-TV-Kanal-Listesi-v0.11.apk dist/EYMEN-TV-Logo-8K.png \
+            gh release upload uydu-tv-v0.12 dist/EYMEN-TV-Kanal-Listesi-v0.12.apk dist/EYMEN-TV-Logo-8K.png \
               --repo "$GITHUB_REPOSITORY" --clobber
           fi
-          gh release view uydu-tv-v0.11 --repo "$GITHUB_REPOSITORY" --json url,assets
-          gh release view uydu-tv-v0.11 --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | select(.name == "EYMEN-TV-Kanal-Listesi-v0.11.apk" and .size > 0) | .name' | grep -Fx 'EYMEN-TV-Kanal-Listesi-v0.11.apk'
+          gh release view uydu-tv-v0.12 --repo "$GITHUB_REPOSITORY" --json url,assets
+          gh release view uydu-tv-v0.12 --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | select(.name == "EYMEN-TV-Kanal-Listesi-v0.12.apk" and .size > 0) | .name' | grep -Fx 'EYMEN-TV-Kanal-Listesi-v0.12.apk'
 
