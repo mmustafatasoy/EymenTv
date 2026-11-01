@@ -428,3 +428,50 @@ object Logos {
         return bmp
     }
 }
+
+/** Checks whether an internet stream answers from this TV's network (HLS playlist or a video response). */
+object WebHealth {
+    fun check(url: String?): Boolean {
+        if (url.isNullOrBlank()) return false
+        var current: String = url
+        try {
+            for (i in 0 until 5) {
+                val conn = URL(current).openConnection() as HttpURLConnection
+                conn.connectTimeout = 6000
+                conn.readTimeout = 6000
+                conn.instanceFollowRedirects = false
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 11; Android TV) EYMEN-TV/2.1")
+                conn.setRequestProperty("Accept", "*/*")
+                val code = conn.responseCode
+                if (code in 300..399) {
+                    val loc = conn.getHeaderField("Location")
+                    conn.disconnect()
+                    if (loc == null) return false
+                    current = URL(URL(current), loc).toString()
+                    continue
+                }
+                if (code !in 200..299) {
+                    conn.disconnect()
+                    return false
+                }
+                val type = (conn.contentType ?: "").lowercase(Locale.ROOT)
+                val head = ByteArray(4096)
+                var read = 0
+                conn.inputStream.use { input ->
+                    while (read < head.size) {
+                        val n = input.read(head, read, head.size - read)
+                        if (n < 0) break
+                        read += n
+                    }
+                }
+                conn.disconnect()
+                val text = String(head, 0, read, Charsets.ISO_8859_1)
+                return text.contains("#EXTM3U") || type.contains("mpegurl") || type.startsWith("video/") ||
+                    type.contains("octet-stream") || type.contains("mp2t")
+            }
+        } catch (e: Exception) {
+            return false
+        }
+        return false
+    }
+}

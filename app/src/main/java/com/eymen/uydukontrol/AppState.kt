@@ -1,8 +1,10 @@
 package com.eymen.uydukontrol
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
+import android.media.tv.TvContract
 import android.os.Handler
 import android.os.Looper
 import android.view.KeyEvent
@@ -16,6 +18,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -111,13 +115,36 @@ class AppState(val activity: MainActivity) {
     var updateStatus by mutableStateOf("")
     var updateInfo by mutableStateOf<Updater.Info?>(null)
 
+    // Built-in internet list and stream health
+    var builtInList by mutableStateOf(prefs.bool("builtInList", true))
+    var hideDead by mutableStateOf(prefs.bool("hideDead", true))
+    val deadWeb = mutableStateListOf<String>()
+    var testingWeb by mutableStateOf(false)
+    private var pendingIntent: Intent? = null
+
     init {
         favorites.addAll(prefs.stringSet("favorites"))
         hidden.addAll(prefs.stringSet("hidden"))
         locked.addAll(prefs.stringSet("locked"))
+        deadWeb.addAll(prefs.stringSet("deadWeb"))
         reminders.addAll(prefs.loadReminders())
         if (!splashEnabled) screen = Screen.LIVE
     }
+
+    /** The list the app downloads: the user's own address, else the daily-tested EYMEN list. */
+    fun effectiveListUrl(): String = when {
+        m3uUrl.isNotBlank() -> m3uUrl
+        builtInList -> DEFAULT_LIST_URL
+        else -> ""
+    }
+
+    private fun bundledList(): String? = try {
+        ctx.assets.open("channels/tr.m3u").use { String(it.readBytes(), Charsets.UTF_8) }
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun isDead(ch: Channel): Boolean = hideDead && ch.source == Source.WEB && deadWeb.contains(ch.key)
 
     // ---------------------------------------------------------------- startup
 
@@ -142,7 +169,9 @@ class AppState(val activity: MainActivity) {
         loading = true
         scope.launch {
             val tv = withContext(Dispatchers.IO) { TvSource.load(ctx) }
-            val cached = withContext(Dispatchers.IO) { M3u.readCache(ctx) }
+            val cached = withContext(Dispatchers.IO) {
+                M3u.readCache(ctx) ?: (if (m3uUrl.isBlank() && builtInList) bundledList() else null)
+            }
             val web = if (cached != null) withContext(Dispatchers.Default) { M3u.parse(cached) } else emptyList()
             lastTv = tv.channels
             lastWeb = web
@@ -151,8 +180,9 @@ class AppState(val activity: MainActivity) {
                 tv.error ?: "Kanal bulunamadı (${tv.rows} kayıt, ${tv.inputs} TV girişi). Ayarlar › Kanal kaynakları bölümünden internet listesi ekleyebilirsin."
             } else null
             loading = false
-            startPlaybackIfNeeded()
-            if (refreshWeb && m3uUrl.isNotBlank()) refreshOnline(false)
+            if (!applyPendingIntent()) startPlaybackIfNeeded()
+            if (refreshWeb && effectiveListUrl().isNotBlank()) refreshOnline(false)
+            else maybeTestWeb()
         }
     }
 
@@ -162,7 +192,7 @@ class AppState(val activity: MainActivity) {
         for (t in tv) t.web = null
         for (w in web) w.matched = false
         val byNorm = HashMap<String, Channel>()
-        for (w in web) if (w.norm.isNotEmpty() && !byNorm.containsKey(w.norm)) byNorm[w.norm] = w
+        for (w in web) if (w.norm.isNotEmpty() && !isDead(w) && !byNorm.containsKey(w.norm)) byNorm[w.norm] = w
         var matched = 0
         for (t in tv) {
             val w = byNorm[t.norm]
@@ -221,7 +251,7 @@ class AppState(val activity: MainActivity) {
 
     // ---------------------------------------------------------------- lists
 
-    fun visible(): List<Channel> = all.filter { !hidden.contains(it.key) }
+    fun visible(): List<Channel> = all.filter { !hidden.contains(it.key) && !isDead(it) }
     fun isFav(ch: Channel): Boolean = favorites.contains(ch.favoriteKey)
     fun isLocked(ch: Channel): Boolean = locked.contains(ch.key)
     fun isHidden(ch: Channel): Boolean = hidden.contains(ch.key)
@@ -678,13 +708,84 @@ class AppState(val activity: MainActivity) {
     fun saveM3uUrl(url: String) {
         m3uUrl = url.trim()
         prefs.putStr("m3uUrl", if (m3uUrl.isEmpty()) null else m3uUrl)
-        if (m3uUrl.isNotEmpty()) refreshOnline(true)
+        if (effectiveListUrl().isNotEmpty()) refreshOnline(true) else clearWebList()
+    }
+
+    fun toggleBuiltInList() {
+        builtInList = !builtInList
+        prefs.putBool("builtInList", builtInList)
+        if (effectiveListUrl().isNotEmpty()) refreshOnline(true) else clearWebList()
+    }
+
+    private fun clearWebList() {
+        try {
+            M3u.cacheFile(ctx).delete()
+        } catch (e: Exception) {
+        }
+        lastWeb = emptyList()
+        merge()
+        toast("İnternet kanalları kaldırıldı")
+    }
+
+    private fun maybeTestWeb() {
+        if (lastWeb.isEmpty()) return
+        val last = prefs.str("deadWebAt", "0").toLongOrNull() ?: 0L
+        if (System.currentTimeMillis() - last > 20 * 3600000L) testWebChannels(false)
+    }
+
+    /** Tries every internet channel from this TV's own network and hides the ones that do not open. */
+    fun testWebChannels(verbose: Boolean) {
+        if (testingWeb) return
+        val list = lastWeb.toList()
+        if (list.isEmpty()) {
+            if (verbose) toast("Test edilecek internet kanalı yok")
+            return
+        }
+        testingWeb = true
+        if (verbose) toast("${list.size} internet kanalı deneniyor…")
+        scope.launch {
+            val dead = ArrayList<String>()
+            withContext(Dispatchers.IO) {
+                for (chunk in list.chunked(8)) {
+                    val results = chunk.map { ch -> async { ch.key to WebHealth.check(ch.streamUrl) } }.awaitAll()
+                    for ((key, ok) in results) if (!ok) dead.add(key)
+                }
+            }
+            deadWeb.clear()
+            deadWeb.addAll(dead)
+            prefs.saveSet("deadWeb", dead)
+            prefs.putStr("deadWebAt", System.currentTimeMillis().toString())
+            merge()
+            testingWeb = false
+            if (verbose) toast("${list.size - dead.size} kanal çalışıyor, ${dead.size} kanal açılmadığı için gizlendi")
+        }
+    }
+
+    /** Called when an internet stream fails while playing: if it really does not answer, hide it. */
+    fun onWebPlaybackError(url: String?) {
+        if (url == null) return
+        val ch = lastWeb.firstOrNull { it.streamUrl == url } ?: return
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) { WebHealth.check(url) }
+            if (!ok && !deadWeb.contains(ch.key)) {
+                deadWeb.add(ch.key)
+                prefs.saveSet("deadWeb", deadWeb)
+                merge()
+                if (hideDead) toast("${ch.name} şu an açılmıyor, listeden gizlendi")
+            }
+        }
+    }
+
+    fun toggleHideDead() {
+        hideDead = !hideDead
+        prefs.putBool("hideDead", hideDead)
+        merge()
     }
 
     fun refreshOnline(verbose: Boolean) {
-        val url = m3uUrl
+        val url = effectiveListUrl()
         if (url.isBlank()) {
-            if (verbose) toast("Önce M3U liste adresini gir")
+            if (verbose) toast("Önce M3U liste adresini gir ya da hazır listeyi aç")
             return
         }
         if (verbose) toast("İnternet kanal listesi indiriliyor…")
@@ -700,8 +801,9 @@ class AppState(val activity: MainActivity) {
                 lastWeb = list
                 merge()
                 if (all.isNotEmpty()) loadError = null
-                startPlaybackIfNeeded()
+                if (!applyPendingIntent()) startPlaybackIfNeeded()
                 if (verbose) toast("${list.size} internet kanalı yüklendi, $matchedCount kanal uyduyla eşleşti")
+                if (verbose) testWebChannels(false) else maybeTestWeb()
             } catch (e: Exception) {
                 if (verbose) toast("Liste indirilemedi: ${e.message ?: "bağlantı hatası"}")
             }
@@ -727,11 +829,53 @@ class AppState(val activity: MainActivity) {
                     if (all.isNotEmpty()) loadError = null
                     startPlaybackIfNeeded()
                     toast("${list.size} internet kanalı yüklendi")
+                    testWebChannels(false)
                 } catch (e: Exception) {
                     toast("Dosya okunamadı")
                 }
             }
         }
+    }
+
+    // ---------------------------------------------------------------- opening from the launcher
+
+    /**
+     * EYMEN Başlatıcı (or any app) can open a channel or a screen:
+     * extras channel_key / channel_number / open=guide|epg|home|settings / skip_splash,
+     * or a TvContract channel URI as the intent data.
+     */
+    fun handleIntent(intent: Intent?) {
+        if (intent == null) return
+        val hasTarget = intent.hasExtra(EXTRA_CHANNEL_KEY) || intent.hasExtra(EXTRA_CHANNEL_NUMBER) ||
+            intent.hasExtra(EXTRA_OPEN) || intent.data != null
+        if (intent.getBooleanExtra(EXTRA_SKIP_SPLASH, false)) onSplashFinished()
+        if (!hasTarget) return
+        pendingIntent = intent
+        if (!loading) applyPendingIntent()
+    }
+
+    private fun applyPendingIntent(): Boolean {
+        val intent = pendingIntent ?: return false
+        pendingIntent = null
+        val data = intent.data
+        val key = intent.getStringExtra(EXTRA_CHANNEL_KEY)
+            ?: if (data != null && data.scheme == "content" && data.authority == TvContract.AUTHORITY) data.lastPathSegment else null
+        val number = intent.getStringExtra(EXTRA_CHANNEL_NUMBER)
+        val ch = (if (key != null) all.firstOrNull { it.key == key } else null)
+            ?: (if (number != null) visible().firstOrNull { it.number == number } else null)
+        if (ch != null) {
+            if (screen != Screen.SPLASH) goLive()
+            play(ch)
+        } else if (current == null) {
+            startPlaybackIfNeeded()
+        }
+        when (intent.getStringExtra(EXTRA_OPEN)) {
+            "guide" -> openGuide()
+            "epg" -> openEpg()
+            "home" -> goHome()
+            "settings" -> openSettings()
+        }
+        return true
     }
 
     // ---------------------------------------------------------------- reminders
@@ -994,12 +1138,15 @@ class AppState(val activity: MainActivity) {
             }
         )
         5 -> listOf(
+            SettingItem("Hazır internet listesi (EYMEN)", onOff(builtInList)) { toggleBuiltInList() },
             SettingItem("Uydu yoksa internetten devam et", onOff(autoOnline)) {
                 autoOnline = !autoOnline
                 prefs.putBool("autoOnline", autoOnline)
             },
-            SettingItem("M3U liste adresi", if (m3uUrl.isBlank()) "Girilmedi" else shorten(m3uUrl)) {
-                pushDialog(Dialog.TextInput("M3U liste adresi", m3uUrl, "Adresi yaz veya telefon kumandasından gönder") { saveM3uUrl(it) })
+            SettingItem("Açılmayan internet kanallarını gizle", onOff(hideDead)) { toggleHideDead() },
+            SettingItem("İnternet kanallarını şimdi dene", if (testingWeb) "Deneniyor…" else "${deadWeb.size} gizli") { testWebChannels(true) },
+            SettingItem("Özel M3U liste adresi", if (m3uUrl.isBlank()) "Girilmedi" else shorten(m3uUrl)) {
+                pushDialog(Dialog.TextInput("Özel M3U liste adresi", m3uUrl, "Boş bırakırsan hazır EYMEN listesi kullanılır") { saveM3uUrl(it) })
             },
             SettingItem("USB'den M3U dosyası seç") { importM3uFile() },
             SettingItem("İnternet listesini yenile") { refreshOnline(true) },
@@ -1273,5 +1420,10 @@ class AppState(val activity: MainActivity) {
 
     companion object {
         const val PERM_TV = "android.permission.READ_TV_LISTINGS"
+        const val DEFAULT_LIST_URL = "https://raw.githubusercontent.com/mmustafatasoy/EymenTv/main/channels/tr.m3u"
+        const val EXTRA_CHANNEL_KEY = "channel_key"
+        const val EXTRA_CHANNEL_NUMBER = "channel_number"
+        const val EXTRA_OPEN = "open"
+        const val EXTRA_SKIP_SPLASH = "skip_splash"
     }
 }

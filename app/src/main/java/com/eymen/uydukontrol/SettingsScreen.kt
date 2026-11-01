@@ -37,7 +37,7 @@ private val sectionHelp = listOf(
     "İzlediğin kanalın ses dili ve altyazısı.",
     "Seçtiğin kanalları 4 haneli PIN ile kilitle. Kanal yönetiminden bir kanal seçip kilitleyebilirsin.",
     "Telefonun kamerasıyla QR kodu okut, kumanda telefonun tarayıcısında açılır. TV ile telefon aynı Wi-Fi ağında olmalı.",
-    "Uydu sinyali kesilince aynı kanal internetten devam eder. Bunun için kanal yayın adreslerini içeren bir M3U listesi gerekir.",
+    "Hazır EYMEN listesi her gün GitHub'da denenir; bu TV'de açılmayan kanallar otomatik gizlenir. Uydu sinyali kesilince aynı kanal internetten devam eder.",
     "Yayın akışından kurduğun hatırlatıcılar. Silmek için OK'ye bas.",
     "Yeni sürümler GitHub Releases'tan indirilip kurulur.",
     "EYMEN TV 2.0 · Atasoy Yazılım"

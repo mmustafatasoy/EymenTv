@@ -45,6 +45,7 @@ class Playback(private val ctx: Context, private val app: AppState) {
     var videoAvailable by mutableStateOf(false)
     var status by mutableStateOf("")
     var playingChannel: Channel? = null
+    private var webUrl: String? = null
 
     val audioTracks = mutableStateListOf<TvTrackInfo>()
     val subtitleTracks = mutableStateListOf<TvTrackInfo>()
@@ -61,7 +62,8 @@ class Playback(private val ctx: Context, private val app: AppState) {
             override fun onPlayerError(error: PlaybackException) {
                 if (!webActive) return
                 status = "İnternet yayını açılamadı"
-                app.toast("İnternet yayını açılamadı. Listedeki adres çalışmıyor olabilir.")
+                app.toast("İnternet yayını açılamadı")
+                app.onWebPlaybackError(webUrl)
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -239,6 +241,7 @@ class Playback(private val ctx: Context, private val app: AppState) {
         } else {
             MediaItem.fromUri(url)
         }
+        webUrl = url
         exo.setMediaItem(item)
         exo.prepare()
         exo.playWhenReady = true

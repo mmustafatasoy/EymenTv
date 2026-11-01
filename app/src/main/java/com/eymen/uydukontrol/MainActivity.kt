@@ -35,6 +35,13 @@ class MainActivity : ComponentActivity() {
         app = AppState(this)
         setContent { EymenRoot(app) }
         app.start()
+        app.handleIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (::app.isInitialized) app.handleIntent(intent)
     }
 
     @Suppress("DEPRECATION")

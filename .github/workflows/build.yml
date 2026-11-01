@@ -47,6 +47,13 @@ jobs:
           curl -fsSL -o app/src/main/assets/fonts/Manrope.ttf "https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/Manrope%5Bwght%5D.ttf" || echo "Manrope indirilemedi, sistem yazı tipi kullanılacak"
           ls -la app/src/main/assets/fonts
 
+      - name: Hazır kanal listesini APK'ya koy
+        shell: bash
+        run: |
+          mkdir -p app/src/main/assets/channels
+          if test -s channels/tr.m3u; then cp channels/tr.m3u app/src/main/assets/channels/tr.m3u; fi
+          ls -la app/src/main/assets/channels
+
       - name: İmzalı APK derle
         id: build
         shell: bash
@@ -68,21 +75,24 @@ jobs:
           mkdir -p dist
           cp app/build/outputs/apk/release/app-release.apk "dist/EYMEN-TV-$VERSION.apk"
           cp app/build/outputs/apk/release/app-release.apk dist/EYMEN-TV.apk
-          cat > notes.md <<'NOTES'
-          # EYMEN TV 2.0
+          cat > notes.md <<NOTES
+          # EYMEN TV $VERSION
 
-          Baştan yazılmış yeni sürüm. v0.12'nin üzerine güncelleme olarak kurulur; gizlenen kanallar, favoriler, kanal adları ve özel logolar korunur.
+          v0.12 ve sonrası sürümlerin üzerine güncelleme olarak kurulur; gizlenen kanallar, favoriler, kanal adları ve özel logolar korunur.
 
+          **2.1 ile gelenler**
+          - Hazır internet kanal listesi: Türkiye'nin herkese açık ücretsiz yayınları, her gün GitHub'da denenir
+          - Bu TV'de açılmayan internet kanalları otomatik gizlenir (Ayarlar › Kanal kaynakları)
+          - EYMEN Başlatıcı'dan doğrudan kanal ve ekran açma
+
+          **2.0'dan beri**
           - Açılışta EYMEN TV logosu ve M. Muhammet Atasoy imzası
-          - Yayının üstünde açılan kanal bandı: şimdi ve sonraki program, ilerleme, ses ve görüntü bilgisi
-          - Kanal rehberi: kategoriler, arama, her kanalın şu anki programı
-          - Yayın akışı ızgarası ve program hatırlatıcıları
-          - Ana ekran, yeni ayarlar ve kanal yönetimi (sırala, gizle, ad, logo, kategori, PIN kilidi)
-          - Uydu sinyali kesilince internet yayınına otomatik geçiş (M3U listesi gerekir), sinyal gelince uyduya dönüş
-          - Telefon kumandası: TV'deki QR kodu okutun, telefonun tarayıcısında açılır
-          - Uygulama içinden güncelleme denetimi
+          - Kanal bandı, kanal rehberi, yayın akışı ve hatırlatıcılar
+          - Ana ekran, ayarlar ve kanal yönetimi (sırala, gizle, ad, logo, kategori, PIN kilidi)
+          - Uydu sinyali kesilince internet yayınına otomatik geçiş
+          - QR ile telefon kumandası, uygulama içinden güncelleme
 
-          TV'ye kurmak için: Downloader uygulamasına şu adresi yazın
+          TV'ye kurmak için Downloader uygulamasına şu adresi yazın:
           https://github.com/mmustafatasoy/EymenTv/releases/latest/download/EYMEN-TV.apk
           NOTES
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
