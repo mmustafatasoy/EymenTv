@@ -125,6 +125,9 @@ jobs:
       - name: Verify no advertisement and hourly top-right logo plus website
         run: python3 eymen-uydu-kontrol/tests/promo_smoke_test.py
 
+      - name: Verify real neon interface and functional TV settings
+        run: python3 eymen-uydu-kontrol/tests/neon_ui_smoke_test.py
+
       - name: Publish EYMEN TV v0.12 neon interface
         if: github.event_name != 'pull_request'
         env:
