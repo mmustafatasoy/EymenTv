@@ -1,68 +1,43 @@
-# EYMEN TV — Uydu Kanal Listesi
+# EYMEN TV — Uydu Kanal Listesi (v0.11)
 
-**EYMEN TV artık yalnızca uydu/TV kanal listesi uygulamasıdır.** Eski TV ana ekranı (launcher) projesi iptal edilmiştir ve bu deponun `main` dalında bulunmaz.
+**EYMEN TV**, Android uyumlu TV'lerde kanal listesi, kumandayla 10 kanallık sayfalar, favoriler, kanal düzenleme ve DTVKit/TV Input Framework üzerinden cihazın izin verdiği yayınları açmayı hedefleyen uygulamadır. TV başlatıcısı (launcher) değildir.
 
-## 📥 APK indir
+## 📥 EYMEN TV v0.11 APK
 
-**[⬇ EYMEN TV v0.10 — Saatlik Animasyonlu Alt Bant Reklamı APK](https://github.com/mmustafatasoy/EymenTv/releases/download/uydu-tv-v0.10/EYMEN-TV-Kanal-Listesi-v0.10.apk)**
+**[EYMEN TV v0.11 — Reklamsız / saatlik üst logo ve web adresi](https://github.com/mmustafatasoy/EymenTv/releases/tag/uydu-tv-v0.11)**
 
-[GitHub Releases — Kanal Listesi](https://github.com/mmustafatasoy/EymenTv/releases)
+[Önceki APK sürümleri](https://github.com/mmustafatasoy/EymenTv/releases)
 
-Önceki v0.4 ve v0.5 sürümleri Releases'de geri dönüş amacıyla korunur.
+APK, Android derleme ve testleri başarılı olduğunda yukarıdaki GitHub Releases sürümüne eklenir. Kod deposu özel olduğundan indirme için GitHub hesap erişimi gerekebilir.
 
-## Dönen şeffaf logo ve toplu kanal silme — v0.10
+## Yenilikler: Reklam kaldırıldı
 
-- Dünya küresi bulunmayan yeni şeffaf vektör EYMEN TV logosu ile web adresi sağ üst köşede 3D perspektif hissiyle sürekli dönüyor.
-- Performans için uygulama içine optimize edilmiş şeffaf `assets/brand_3d.svg / brand_3d.png` eklenmiştir. Ayrı **7680×4320 şeffaf PNG** SVG vektör kaynaktan doğrudan oluşturulur ve GitHub Releases'e APK ile birlikte yüklenir.
-- `MENU → Uygulama ayarları → Toplu kanal sil (işaretleyerek)` seçeneğiyle istenen sayıda kanal işaretlenir; ikinci onaydan sonra birlikte EYMEN TV listesinden kaldırılır.
-- Kaldırılan kanallar `Silinen kanalları geri getir` aracılığıyla geri getirilebilir. TV'nin gerçek kanal veritabanı kesinlikle silinmez.
-- Eski kanal menüsü, kumanda, kanal sayfaları ve saatlik reklam aynı şekilde kalır.
+- **Fotoğraflı alt bant reklamı tamamen kaldırıldı.** Yayını kaplayan fotoğraf, telefon numarası, geliştirici ismi ve neon reklam animasyonları artık gösterilmez.
+- **Sağ üstteki EYMEN TV logosu sürekli kalır.** Şeffaf vektörden oluşturulur, dönen 3D hissi korunur. Web adresi sürekli gösterilen sağ logodan çıkarıldı.
+- **Üstteki EYMEN TV logosu ve `www.atasoyyazilim.com` adresi**, TV uygulamasında kanal açık ve menü kapalıyken **60 dakikada bir, 15 saniye** görünür; ardından kaybolur.
+- Son otomatik görünme zamanı uygulama yeniden açılsa da saklanır. Yeni kurulumda ilk otomatik gösterim ilk açılıştan yaklaşık bir saat sonradır.
+- Test için **MENU → Seçenekler → Saatlik logo/web göster (test)** kullanılabilir. Bu test saatlik zamanlayıcıyı sıfırlamaz.
+- Reklam fotoğrafı ve eski reklam logosunun dosyaları da APK'dan çıkarıldı.
 
-## Vestel ve diğer TV'lerde kanal desteği — v0.10
+## Değiştirilmeyenler
 
-- Whale TV'de mevcut DTVKit yayın kaynağı aynen tercih edilir.
-- DTVKit bulunmadığında Vestel dahil farklı üreticilerin erişime açtığı `TvContract.Channels` kayıtları da kanal listesinde gösterilir.
-- Kanal veritabanı boş veya erişime kapalıysa uygulama kaç kayıt ve kaç TV girişi görülebildiğini gösterir.
-- **TV üreticisinin sistem kayıtlarını gizlemesi durumunda normal APK ile bunu aşmak mümkün olmayabilir.** Görünen bir kanalın oynatılabilmesi de tuner izinlerine bağlıdır.
-- **Kanal menüsü, kumanda kısayolları ve reklam çizimi değiştirilmedi.**
+- Kanal listesi ve kumandayla sağ/sol 10'lu sayfa geçişi
+- Favorilere ekleme ve çıkarma
+- Kanal logosu seçme ve düzenleme
+- İşaretleyerek toplu kanal silme ve geri getirme (TV'nin sistem veritabanını silmez)
+- Kanal bilgisi ve EPG katmanı, ses izini seçme ve mevcut TV tuner yaklaşımı
+- Vestel/DTVKit uyumluluk denemeleri ve mevcut erişim sınırları
 
-## Özellikler ve sınırlar
+## TV uyumluluğu
 
-- Kanal listesinde kumandayla yön/OK/Geri kontrolü ve **10 kanallık sayfalar** arasında hızlı geçiş hedeflenir.
-- Kanal ekleme, düzenleme, silme ve kanallara özel logo tanımlama arayüzü bulunur.
-- Kanal listesi üzerinde şeffaf menü, kanal bilgi katmanı ve **EYMEN TV / atasoyyazılım.com** görsel markalaması geliştirme kapsamındadır.
-- **DTVKit ve uydu alıcısı entegrasyonu; gerçek tuner, kanal geçişi, görüntü ve ses kontrolü** cihazın izin ve API'lerine bağlıdır. Senna/Whale OS üzerinde doğrulanmadan tüm kanalların açıldığı veya sesin çalıştığı iddia edilmemelidir.
-- Bu APK **Android uyumlu TV'ler için test sürümüdür**. Whale OS üzerinde APK kurulum ve sistem kanal uygulamasına erişim ayrıca test gerektirir.
-- EYMENkids bu depodan bağımsızdır ve değiştirilmez.
+TV üreticisi kanal kayıtlarını veya tuner erişimini uygulamalara kapatmış olabilir. Uygulamanın kanalları listeleyebilmesi, görüntü ve sesi açabileceği anlamına gelmez. Fiziksel TV'de test gerektirir.
 
-## Yayın içi reklam — v0.10
+## Derleme
 
-- Reklam **yayının alt kısmında tam genişlikte**, klasik TV alt bant reklamı gibi görünür; sağ altta bağımsız bir kutu değildir.
-- Aile fotoğrafı altın renkli ışık yayıyla açılır, kırmızı/mavi neon prodüksiyon çizgileri hareket eder; ardından **www.atasoyyazılım.com**, **0531 221 89 65**, **MUHAMMET ATASOY** yazıları sıralı şekilde belirir, en son EYMEN TV logosu animasyonla gelir.
-- **Yalnızca uygulama yayını açık ve kanal listesi kapalı iken**, son gösterimden **en az 60 dakika** sonra görünür ve **15 saniye** sürer.
-- Zamanlamanın uygulama kapatılıp açıldığında da korunması için SharedPreferences kullanılır.
-- İlk otomatik gösterim ilk çalıştırmadan 60 dakika sonradır; **Ayarlar → Reklamı şimdi göster (test)** ile hemen test edilebilir.
-- **Yalnızca reklam görselliği değişmiştir; kanal menüsü, kumanda davranışı, kanal logoları ve kanal oynatma kodları aynı kalmıştır.**
-- Fotoğraf `eymen-uydu-kontrol/assets/promo_family.jpg` dosyasındadır. Artık 490×205 boyutlu onaylanan aile fotoğrafı ve gerçek parlak EYMEN TV logosu (`assets/promo_logo.jpg`, 390×110) APK içinde bulunur. İlk düşük çözünürlüklü yer tutucu kaldırılmıştır.
-- Bu bant TV işletim sisteminin tüm kanallarında değil **EYMEN TV uygulamasında açılan yayınlarda** çalışır. Sistem yayın katmanında ayrı uygulamalara reklam bindirebilme garanti edilmez.
+[GitHub Actions — EYMEN Uydu TV](https://github.com/mmustafatasoy/EymenTv/actions/workflows/build.yml)
 
-## Kaynak kod ve otomatik derleme
+Kaynak dosyaları `eymen-uydu-kontrol/` altındadır; otomatik derleme, Java kanal gezinme ve marka gösterim testlerinden sonra imzalı APK'yı Releases'e yayımlar.
 
-Proje kaynakları `eymen-uydu-kontrol/` içinde bulunur. Bu proje ilk aktarımda `uydu-packages/eymen-tv-0.4.b64` arşivinden güvenli biçimde açılarak ana dala yerleştirilir; kaynak aktarıldığında arşiv kaldırılır.
+### Kurulum uyarısı
 
-- **[Actions — Build EYMEN Uydu TV](https://github.com/mmustafatasoy/EymenTv/actions/workflows/build.yml)**
-- İş akışı, kanal sayfaları için Java testlerini çalıştırır; Android API 33 ile APK derler.
-- Testten geçen kanal sürümü **Releases** sayfasında yayımlanır. Arşivden kaynak aktarımı ilk başarılı derlemeden sonra tamamlanır.
-
-## Televizyona kurulum
-
-1. Yukarıdaki APK'yı indirip USB belleğe kopyala.
-2. TV harici APK yüklemeye izin veriyorsa dosya yöneticisinden açıp kur.
-3. Uygulamayı normal TV uygulaması olarak başlat; **varsayılan HOME/launcher olarak seçme**.
-4. Kanal sayfalarını, kumandayı ve sesi test et. Cihaz üreticisi uydu tuneri erişimini engelliyorsa uygulama orijinal uydu yazılımının yerine geçemeyebilir.
-
-**Uyarı:** APK'nın imzası kurulu farklı bir sürümle uyuşmuyorsa Android güncellemeyi reddedebilir. Verileri korumak için mevcut uygulamayı kaldırmadan önce bir yedekleme planı yap. TV'nin sistem uygulamalarını veya EYMENkids'i kaldırma.
-
-## Geliştirici
-
-Muhammet Atasoy — EYMEN TV
+Önceki sürüm başka anahtarla imzalandıysa Android güncellemeyi reddedebilir; uygulamayı kaldırmadan önce favori ve kanal düzenlerinizi yedeklemeyi değerlendirin. EYMENkids veya sistem TV uygulamasını kaldırmayın.
