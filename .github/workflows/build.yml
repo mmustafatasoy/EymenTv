@@ -7,6 +7,10 @@ on:
       - 'eymen-uydu-kontrol/**'
       - 'uydu-packages/**'
       - '.github/workflows/build.yml'
+  pull_request:
+    paths:
+      - 'eymen-uydu-kontrol/**'
+      - '.github/workflows/build.yml'
   workflow_dispatch:
 
 permissions:
@@ -94,10 +98,11 @@ jobs:
           export TV_ANDROID_JAR="$ANDROID_HOME/platforms/android-33/android.jar"
           export TV_BUILD_TOOLS="$ANDROID_HOME/build-tools/33.0.2"
           bash build.sh
-          test -s build/EYMEN-TV-0.10.apk
-          ls -lh build/EYMEN-TV-0.10.apk
+          test -s build/EYMEN-TV-0.11.apk
+          ls -lh build/EYMEN-TV-0.11.apk
 
       - name: Commit channel source and remove temporary packed archive
+        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
@@ -117,50 +122,48 @@ jobs:
       - name: Test check-to-delete and continuously rotating transparent brand
         run: python3 eymen-uydu-kontrol/tests/brand_bulk_smoke_test.py
 
-      - name: Verify hourly banner, actual photo and glossy logo assets
+      - name: Verify no advertisement and hourly top-right logo plus website
         run: python3 eymen-uydu-kontrol/tests/promo_smoke_test.py
 
-      - name: Publish EYMEN TV v0.10 hourly lower-third banner APK
+      - name: Publish EYMEN TV v0.11 without advertising banner
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp eymen-uydu-kontrol/build/EYMEN-TV-0.10.apk dist/EYMEN-TV-Kanal-Listesi-v0.10.apk
-          test -s dist/EYMEN-TV-Kanal-Listesi-v0.10.apk
+          cp eymen-uydu-kontrol/build/EYMEN-TV-0.11.apk dist/EYMEN-TV-Kanal-Listesi-v0.11.apk
+          test -s dist/EYMEN-TV-Kanal-Listesi-v0.11.apk
           cat > /tmp/eymen-release-notes.md <<'NOTES'
-          # EYMEN TV — Uydu Kanal Listesi v0.10
+          # EYMEN TV — Uydu Kanal Listesi v0.11
 
-          - Gerçek şeffaf PNG logo, vektör kaynak üzerinden 1024×576 uygulama görseli ve 7680×4320 8K dosya olarak derlenir.
-          - Toplu kanal seçme: ayrı onaylı, işaretleyerek silme ve silinenleri geri getirme
-          - Dönen 3D EYMEN TV logosu, şeffaf zeminde dairesel site adresi etiketi
-          - Vestel gibi DTVKit dışı TV'lerde cihazın izin verdiği kanal kayıtlarına erişim için otomatik TV giriş uyumluluğu
-          - Whale TV'nin çalışan DTVKit listesi korunur; kanal menüsü ve reklam görüntüsü değiştirilmedi
-          - Önceki özellikler korunmuştur: 10 kanallık sayfalar, kanal düzenleme, logolar ve kumanda
-          - Yayın sırasında **alt bantta** animasyonlu EYMEN TV tanıtımı
-          - Gerçek aile fotoğrafı ve parlak EYMEN TV logo görselleri korunmuştur; alt bant tasarımı profesyonel prodüksiyon tarzı neon/altın kompozisyonla yenilendi.
-          - Fotoğraf ışık yayıyla açılır; web adresi, telefon, isim ve en son gerçek EYMEN TV logosu sırayla animasyonla görünür
-          - Uygulama yayında ve menü kapalıyken **bir saatte bir**, **15 saniye** gösterilir; TV kapatılıp açılsa da son gösterim zamanı hatırlanır
-          - Uygulama ayarlarında **Reklamı şimdi göster (test)** seçeneği bulunur
-          - Yayın sesi kapatılmaz, video oynatımı durdurulmaz
-          
-          **Vestel ve diğer cihazlarda TV kanal sağlayıcısının erişime açık olması gerekir.** Android TV'nin TV Input Framework erişimi üreticiye göre değişir; gerçek görüntü/ses fiziksel TV'de test edilmelidir.
+          - **Tam ekran genişliğindeki alt bant reklam ve fotoğraf/telefon/isim promosyonu kaldırıldı.**
+          - Sağ üstteki şeffaf 3D EYMEN TV logosu ve atasoyyazilim.com adresi korunur.
+          - Bu küçük köşe markası yalnızca **her 60 dakikada bir, 15 saniye** görünür; sürekli açık değildir.
+          - Son otomatik gösterim zamanı TV'de saklanır; uygulama yeniden açıldığında sıklık sıfırlanmaz.
+          - MENU → Seçenekler → **Sağ üst logo ve web adresini göster (test)** ile önizleme yapılabilir.
+          - 10 kanallık sayfalar, kumanda gezinmesi, kanal ses izinleri, toplu seçerek silme, geri getirme ve kanal logoları değiştirilmedi.
+          - Kaynak kod ve TV ekranındaki geniş reklam görselleri APK paketinden çıkarıldı.
+          - Eski v0.10 ve önceki sürümler GitHub Releases içinde ayrı korunur.
+
+          **Bu APK yalnızca Android uyumlu TV'lerde test sürümüdür.** DTVKit, Vestel ve Whale TV üzerinde kanal oynatma ve ses izni cihaz üreticisi tarafından sınırlandırılabilir. Eski kurulumla imza uyuşmazsa yükleme/güncelleme başarısız olabilir.
           NOTES
-          if ! gh release view uydu-tv-v0.10 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create uydu-tv-v0.10 dist/EYMEN-TV-Kanal-Listesi-v0.10.apk dist/EYMEN-TV-Logo-8K.png \
+          if ! gh release view uydu-tv-v0.11 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create uydu-tv-v0.11 dist/EYMEN-TV-Kanal-Listesi-v0.11.apk dist/EYMEN-TV-Logo-8K.png \
               --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "EYMEN TV — Uydu Kanal Listesi v0.10 • 3D Logo ve Toplu Silme" \
+              --title "EYMEN TV — v0.11 • Reklamsız, Saatlik Köşe Logosu" \
               --notes-file /tmp/eymen-release-notes.md \
               --latest
           else
-            gh release upload uydu-tv-v0.10 dist/EYMEN-TV-Kanal-Listesi-v0.10.apk dist/EYMEN-TV-Logo-8K.png \
+            gh release upload uydu-tv-v0.11 dist/EYMEN-TV-Kanal-Listesi-v0.11.apk dist/EYMEN-TV-Logo-8K.png \
               --repo "$GITHUB_REPOSITORY" --clobber
           fi
-          gh release view uydu-tv-v0.10 --repo "$GITHUB_REPOSITORY" --json url,assets
+          gh release view uydu-tv-v0.11 --repo "$GITHUB_REPOSITORY" --json url,assets
 
       - name: Remove obsolete launcher release and duplicate channel test release
+        if: github.event_name != 'pull_request'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -176,6 +179,7 @@ jobs:
           fi
 
       - name: Remove obsolete integration branch
+        if: github.event_name != 'pull_request'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
