@@ -61,6 +61,6 @@ jobs:
             fi
             GH_TOKEN="$PUBLIC_PUBLISH_TOKEN" gh release view "$public_tag" \
               --repo "$PUBLIC_REPO" --json assets --jq \
-              '.assets[] | select(.name | endswith(".apk")) | select(.size > 0) | .browserDownloadUrl' \
-              | grep -F "https://github.com/$PUBLIC_REPO/releases/download/$public_tag/"
+              '.assets[] | select(.name | endswith(".apk")) | select(.size > 0) | .name' \
+              | grep -Fx "EYMEN-TV-Kanal-Listesi-v$version.apk"
           done
