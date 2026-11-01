@@ -204,7 +204,11 @@ public class PlayerActivity extends Activity {
        row.setTextColor(Color.WHITE);row.setTextSize(16);
        row.setPadding(dp(17),dp(10),dp(12),dp(10));
        row.setMinHeight(dp(51));row.setGravity(Gravity.CENTER_VERTICAL);
-       row.setBackground(menuBackground(0xff102749,0xff315987));
+       android.graphics.drawable.StateListDrawable states=new android.graphics.drawable.StateListDrawable();
+       states.addState(new int[]{android.R.attr.state_selected},menuBackground(0xff49164d,0xffff3c9b));
+       states.addState(new int[]{android.R.attr.state_focused},menuBackground(0xff49164d,0xffff3c9b));
+       states.addState(new int[]{},menuBackground(0xff102749,0xff315987));
+       row.setBackground(states);
        return row;
      }
    });
@@ -353,7 +357,8 @@ public class PlayerActivity extends Activity {
     text(c,label,l+(r-l-textWidth)*.5f,t+(b-t)*.67f,15,active?WHITE:MUTED,true);
   }
   void logo(Canvas c,Channel ch,float x,float y,float w,float ht){
-    if(showChannelLogos)requestLogo(ch);
+    if(!showChannelLogos)return;
+    requestLogo(ch);
     p.setShader(null);p.setStyle(Paint.Style.FILL);p.setColor(Color.WHITE);p.setAlpha(255);
     if(showChannelLogos&&ch.logo!=null&&ch.logo.getWidth()>0&&ch.logo.getHeight()>0){
       float scale=Math.min(w/ch.logo.getWidth(),ht/ch.logo.getHeight());
