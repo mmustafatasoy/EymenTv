@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0B1326">
+<title>EYMEN TV Kumanda</title>
+<style>
+:root{--ink:#05080F;--navy:#0B1326;--glass:rgba(214,226,255,.07);--line:rgba(214,226,255,.13);--fg:#F2F4F8;--mut:#A3ACBF;--dim:#8C96AA;--gold:#E8C27A;--goldInk:#1E1505;--live:#FF5468}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:linear-gradient(180deg,var(--navy),var(--ink) 60%);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100%}
+body{padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
+.wrap{max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.12em;font-size:15px}
+.brand b{color:var(--gold)}
+.mark{width:26px;height:26px;border-radius:8px;background:var(--gold);display:grid;place-items:center}
+.mark i{width:0;height:0;border-left:9px solid #0A1224;border-top:6px solid transparent;border-bottom:6px solid transparent;margin-left:3px}
+.pill{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:700;background:rgba(63,185,80,.13);color:#8FE39B}
+.pill.off{background:rgba(255,84,104,.13);color:#FF9AA6}
+.pill span{width:7px;height:7px;border-radius:50%;background:currentColor}
+.now{display:flex;gap:12px;align-items:center;padding:14px;border-radius:18px;background:var(--glass);border:1px solid var(--line)}
+.tile{width:62px;height:40px;flex:none;border-radius:9px;background:#17213D;display:grid;place-items:center;font-weight:800;font-size:15px;color:var(--gold)}
+.now .meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.now small{font-size:12px;font-weight:700;color:var(--gold)}
+.now strong{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:3px;border-radius:2px;background:rgba(214,226,255,.14);overflow:hidden}
+.bar i{display:block;height:3px;background:var(--gold);width:0}
+.search{display:flex;gap:8px}
+input{flex:1;min-width:0;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--glass);color:var(--fg);font:inherit;font-size:16px;padding:0 16px;outline:none}
+input:focus{border-color:var(--gold)}
+button{font:inherit;color:var(--fg);cursor:pointer;border:1px solid var(--line);background:var(--glass)}
+button:active{transform:scale(.96);background:rgba(214,226,255,.16)}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.go{height:48px;padding:0 16px;border-radius:14px;background:var(--gold);color:var(--goldInk);border:0;font-weight:800}
+.results{display:flex;flex-direction:column;gap:6px}
+.results button{display:flex;gap:12px;align-items:center;text-align:left;padding:10px 14px;border-radius:12px;min-height:48px}
+.results em{font-style:normal;color:var(--gold);font-weight:800;min-width:34px}
+.results span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.results small{color:var(--mut);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pad{display:flex;align-items:center;justify-content:space-between}
+.side{display:flex;flex-direction:column;gap:14px}
+.round{width:54px;height:54px;border-radius:50%;display:grid;place-items:center}
+.round svg{width:20px;height:20px}
+.dpad{position:relative;width:224px;height:224px;border-radius:50%;background:var(--glass);border:1px solid var(--line)}
+.dpad button{position:absolute;border:0;background:transparent;color:#C9D0DD;display:grid;place-items:center}
+.dpad svg{width:24px;height:24px}
+.up{left:80px;top:6px;width:64px;height:56px}.down{left:80px;bottom:6px;width:64px;height:56px}
+.left{left:6px;top:80px;width:56px;height:64px}.right{right:6px;top:80px;width:56px;height:64px}
+.ok{left:62px!important;top:62px;width:100px;height:100px;border-radius:50%!important;background:var(--fg)!important;color:#0A1224!important;font-weight:800;font-size:20px;box-shadow:0 10px 24px rgba(0,0,0,.45)}
+.rock{display:flex;align-items:center;gap:12px}
+.rocker{flex:1;display:flex;align-items:center;height:56px;border-radius:16px;background:var(--glass);border:1px solid var(--line);overflow:hidden}
+.rocker button{flex:1;height:56px;border:0;background:transparent;font-size:22px;font-weight:800}
+.rocker span{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--dim)}
+.keys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.keys button{height:48px;border-radius:12px;border:0;font-size:11px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.keys i{width:22px;height:4px;border-radius:2px}
+.r{background:rgba(229,72,77,.16);color:#FF9A9D}.r i{background:#E5484D}
+.g{background:rgba(63,185,80,.16);color:#8FE39B}.g i{background:#3FB950}
+.y{background:rgba(233,196,106,.16);color:#F1D58F}.y i{background:#E9C46A}
+.b{background:rgba(76,141,255,.16);color:#A9C6FF}.b i{background:#4C8DFF}
+h2{margin:4px 0 0;font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--dim)}
+.favs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.favs button{flex:none;height:42px;padding:0 14px;border-radius:999px;font-weight:700;font-size:13px}
+.favs em{font-style:normal;color:var(--dim);margin-right:4px}
+.text{display:none;flex-direction:column;gap:8px;padding:14px;border-radius:16px;border:1px solid rgba(232,194,122,.4);background:rgba(232,194,122,.08)}
+.text.on{display:flex}
+.text p{margin:0;font-size:13px;color:var(--gold);font-weight:700}
+.nums{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.nums button{height:44px;border-radius:12px;font-weight:800;font-size:16px}
+footer{text-align:center;font-size:12px;color:var(--dim);line-height:1.5;padding-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="mark"><i></i></div>EYMEN <b>TV</b></div>
+    <div id="conn" class="pill"><span></span><em id="connText" style="font-style:normal">Bağlanıyor…</em></div>
+  </header>
+
+  <div class="now">
+    <div class="tile" id="num">–</div>
+    <div class="meta">
+      <small id="chan">Kanal bekleniyor</small>
+      <strong id="title">—</strong>
+      <div class="bar"><i id="prog"></i></div>
+    </div>
+  </div>
+
+  <div class="text" id="textBox">
+    <p>TV'de bir yazı alanı açık. Buradan yazıp gönderebilirsin.</p>
+    <div class="search">
+      <input id="textInput" type="text" placeholder="Metni yaz" aria-label="TV'ye gönderilecek metin" autocomplete="off">
+      <button class="go" id="textSend" type="button">Gönder</button>
+    </div>
+  </div>
+
+  <form class="search" id="searchForm">
+    <input id="q" type="search" placeholder="Kanal veya program ara" aria-label="Kanal veya program ara" autocomplete="off">
+    <button class="go" type="submit">Ara</button>
+  </form>
+  <div class="results" id="results"></div>
+
+  <div class="pad">
+    <div class="side">
+      <button class="round" data-k="back" type="button" aria-label="Geri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+      <button class="round" data-k="home" type="button" aria-label="Ana ekran"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/></svg></button>
+    </div>
+    <div class="dpad">
+      <button class="up" data-k="up" type="button" aria-label="Yukarı"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>
+      <button class="down" data-k="down" type="button" aria-label="Aşağı"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button class="left" data-k="left" type="button" aria-label="Sol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button class="right" data-k="right" type="button" aria-label="Sağ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="ok" data-k="ok" type="button">OK</button>
+    </div>
+    <div class="side">
+      <button class="round" data-k="menu" type="button" aria-label="Ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <button class="round" data-k="guide" type="button" aria-label="Yayın akışı"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button>
+    </div>
+  </div>
+
+  <div class="rock">
+    <div class="rocker"><button data-k="chdown" type="button" aria-label="Önceki kanal">−</button><span>KANAL</span><button data-k="chup" type="button" aria-label="Sonraki kanal">+</button></div>
+    <button class="round" data-k="mute" type="button" aria-label="Sesi kapat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg></button>
+    <div class="rocker"><button data-k="voldown" type="button" aria-label="Sesi azalt">−</button><span>SES</span><button data-k="volup" type="button" aria-label="Sesi artır">+</button></div>
+  </div>
+
+  <div class="keys">
+    <button class="r" data-k="red" type="button"><i></i>Yayın akışı</button>
+    <button class="g" data-k="green" type="button"><i></i>Favori</button>
+    <button class="y" data-k="yellow" type="button"><i></i>Ayrıntı</button>
+    <button class="b" data-k="blue" type="button"><i></i>Ses · Altyazı</button>
+  </div>
+
+  <div class="nums" id="nums"></div>
+
+  <h2>FAVORİLER</h2>
+  <div class="favs" id="favs"></div>
+
+  <footer>TV'deki QR kodu okutarak bağlandın.<br>Uygulama kurmadan telefonun tarayıcısında çalışır.</footer>
+</div>
+<script>
+(function(){
+  var t = new URLSearchParams(location.search).get('t') || '';
+  var $ = function(id){ return document.getElementById(id); };
+  function api(path, params){
+    var q = new URLSearchParams(params || {}); q.set('t', t);
+    return fetch(path + '?' + q.toString(), {cache:'no-store'}).then(function(r){
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+  function setConn(ok){
+    $('conn').className = ok ? 'pill' : 'pill off';
+    $('connText').textContent = ok ? 'TV bağlı' : 'Bağlantı yok';
+  }
+  function key(k){
+    if (navigator.vibrate) { try { navigator.vibrate(12); } catch(e){} }
+    api('/api/key', {k:k}).then(function(){ setConn(true); setTimeout(refresh, 400); }).catch(function(){ setConn(false); });
+  }
+  document.querySelectorAll('[data-k]').forEach(function(b){
+    b.addEventListener('click', function(){ key(b.getAttribute('data-k')); });
+  });
+  var nums = $('nums');
+  [1,2,3,4,5,6,7,8,9,0].forEach(function(n){
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = n;
+    b.addEventListener('click', function(){ key('d' + n); });
+    nums.appendChild(b);
+  });
+  function tune(k){ api('/api/tune', {key:k}).then(function(){ setTimeout(refresh, 600); }).catch(function(){ setConn(false); }); }
+  function refresh(){
+    api('/api/state').then(function(s){
+      setConn(true);
+      $('num').textContent = s.number || '–';
+      $('chan').textContent = s.channel ? (s.number + ' · ' + s.channel + (s.source ? ' · ' + s.source : '')) : 'Kanal bekleniyor';
+      $('title').textContent = s.title || 'Program bilgisi yok';
+      $('prog').style.width = Math.round((s.progress || 0) * 100) + '%';
+      $('textBox').className = s.textDialog ? 'text on' : 'text';
+      var favs = $('favs'); favs.innerHTML = '';
+      (s.favorites || []).forEach(function(f){
+        var b = document.createElement('button'); b.type = 'button';
+        var em = document.createElement('em'); em.textContent = f.number;
+        b.appendChild(em); b.appendChild(document.createTextNode(f.name));
+        b.addEventListener('click', function(){ tune(f.key); });
+        favs.appendChild(b);
+      });
+    }).catch(function(){ setConn(false); });
+  }
+  $('searchForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var q = $('q').value.trim();
+    var box = $('results'); box.innerHTML = '';
+    if (!q) return;
+    api('/api/search', {q:q}).then(function(list){
+      if (!list.length) { var p = document.createElement('small'); p.textContent = 'Sonuç yok'; p.style.color = 'var(--mut)'; box.appendChild(p); return; }
+      list.forEach(function(c){
+        var b = document.createElement('button'); b.type = 'button';
+        var em = document.createElement('em'); em.textContent = c.number;
+        var sp = document.createElement('span');
+        var st = document.createElement('strong'); st.textContent = c.name;
+        var sm = document.createElement('small'); sm.textContent = c.title || '';
+        sp.appendChild(st); sp.appendChild(sm);
+        b.appendChild(em); b.appendChild(sp);
+        b.addEventListener('click', function(){ tune(c.key); box.innerHTML = ''; $('q').value = ''; });
+        box.appendChild(b);
+      });
+    }).catch(function(){ setConn(false); });
+  });
+  $('textSend').addEventListener('click', function(){
+    var v = $('textInput').value;
+    api('/api/text', {v:v}).then(function(){ $('textInput').value = ''; setTimeout(refresh, 400); }).catch(function(){ setConn(false); });
+  });
+  refresh();
+  setInterval(refresh, 4000);
+})();
+</script>
+</body>
+</html>

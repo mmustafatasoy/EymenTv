@@ -1,27 +1,47 @@
-# EYMEN TV v0.12 — Neon Android TV Arayüzü
+# EYMEN TV 2.0
 
-Bu sürüm, önceki tanıtım görsellerine yakın **gerçek uygulama arayüzü** sunmak için Android Canvas çizimlerini değiştirir. Tanıtım görselleri birebir ekran kaydı değildir; yayın görüntüsü yalnızca televizyonun izin verdiği gerçek tuner kaynağından gelir.
+Android TV için baştan yazılmış canlı yayın uygulaması. TV'nin uydu kanallarını (TV Input Framework / DTVKit) tek, hızlı ve düzenli bir arayüzde toplar. Uydu sinyali kesilince aynı kanal internetten devam eder.
 
-## Tasarım yenilikleri
+## Kurulum
 
-- TV ekranında koyu lacivert, neon mavi ve pembe kanal listesi, seçili kanal çerçevesi, kanal logoları ve sayfa göstergesi
-- Gerçek EPG bilgisi varsa mevcut program, yayın ilerleme çubuğu ve sıradaki program
-- Sağ üstte kalıcı, küçük EYMEN TV metin/logosu; daha önceki dönen logo ve web adresi **saatte bir 15 saniyelik tanıtım** olarak çalışmaya devam eder
-- Kumandayla gezilebilen neon koyu renkli **Kanal Yönetimi / Genel Ayarlar** menüsü
-- Kanal logoları, EPG, köşe logosu ve saatlik tanıtım için çalışan aç/kapat seçenekleri; tercihler TV üzerinde saklanır
-- Fotoğraflı alt reklam kaldırılmış olarak kalır
+TV'deki **Downloader** uygulamasına şu adresi yazın:
 
-## Kanal özellikleri
+```
+https://github.com/mmustafatasoy/EymenTv/releases/latest/download/EYMEN-TV.apk
+```
 
-10 kanallık sayfalar, sağ/sol kumanda geçişi, favoriler, kanal adını ve logosunu düzenleme, işaretleyerek toplu silme / geri getirme, mevcut ses izi seçimi ve TV Input Framework erişimi korunmuştur. İzinler TV üreticisinin kısıtlamalarına bağlıdır.
+v0.12 ile aynı paket adı ve imzayı kullanır; eski sürümün üzerine güncelleme olarak kurulur. Gizlenen kanallar, favoriler, kanal adları, sıra ve özel logolar korunur.
 
-## APK sürümleri
+## Özellikler
 
-- **v0.12**: GitHub Releases: https://github.com/mmustafatasoy/EymenTv/releases/tag/uydu-tv-v0.12
-- **v0.11**: https://github.com/mmustafatasoy/EymenTv/releases/tag/uydu-tv-v0.11
+- Açılışta EYMEN TV logosu ve M. Muhammet Atasoy imzası
+- Kanal bandı: şimdi ve sonraki program, ilerleme, uydu türü, çözünürlük, ses dili, altyazı
+- Kanal rehberi: kategoriler (Haber, Spor, Çocuk, Belgesel, Müzik, Film, Dini, Radyo, İnternet), arama
+- Yayın akışı ızgarası, canlı önizleme ve program hatırlatıcıları
+- Ana ekran: kaldığın yerden, favoriler, hatırlatıcılar
+- Ayarlar ve kanal yönetimi: sırala, gizle, toplu işaretle, yeniden adlandır, logo, kategori, PIN kilidi
+- Uydu yoksa internetten devam et (M3U listesi adresi veya USB'den dosya)
+- Telefon kumandası: TV'deki QR kodu okutun, telefonun tarayıcısında açılır
+- Uygulama içinden güncelleme denetimi (GitHub Releases)
 
-Ana depo özel ise GitHub hesabıyla oturum açılması gerekir. Bu linkler yönetici içindir; halka açık uygulama kataloglarında özel proje deposu URL'si paylaşılmamalıdır.
+## Kumanda
 
-## Test ve derleme
+| Tuş | Canlı yayında | Kanal rehberinde | Yayın akışında |
+| --- | --- | --- | --- |
+| OK | Kanal rehberi | Kanalı aç | İzle / hatırlatıcı kur |
+| ▲ ▼ / CH± | Kanal değiştir | Kanallarda gez | Kanallarda gez |
+| ◀ ▶ | Rehber / kanal bandı | Kategori | Programlarda gez |
+| Kırmızı | Yayın akışı | Yayın akışı | Önceki gün |
+| Yeşil | Favori | Favori | Favori |
+| Sarı | Ayrıntı | Ara | Sonraki gün |
+| Mavi | Ses · altyazı · internet yayını | | Kategori |
+| MENU | Ayarlar | Ayarlar | Ayarlar |
+| Geri | Bandı kapat / ana ekran | Rehberi kapat | Canlı yayın |
 
-GitHub Actions `.github/workflows/build.yml` Android Java derleme, kanal gezinme ve yeni arayüz regresyon testlerini çalıştırır. Bunların başarılı olması fiziksel TV'de görüntü/ses/tuner davranışının doğrulandığı anlamına gelmez. Gerçek televizyon üzerinden ayrıca test gerekir.
+## Geliştirme
+
+Kotlin + Jetpack Compose, tek modül (`app/`). GitHub Actions her `main` gönderiminde imzalı APK'yı derler ve GitHub Releases'a koyar (`.github/workflows/build.yml`). Derleme sonucu ve günlüğü `ci-logs` dalına yazılır.
+
+Eski v0.12 kaynağı `eymen-uydu-kontrol/` klasöründe duruyor; imza anahtarı da oradan okunur.
+
+Atasoy Yazılım · atasoyyazilim.com

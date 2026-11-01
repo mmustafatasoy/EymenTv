@@ -1,15 +1,13 @@
-name: Build EYMEN Uydu TV — Kanal Listesi
+name: EYMEN TV 2.0 — Derle, imzala, yayınla
 
 on:
   push:
     branches: [main]
     paths:
-      - 'eymen-uydu-kontrol/**'
-      - 'uydu-packages/**'
-      - '.github/workflows/build.yml'
-  pull_request:
-    paths:
-      - 'eymen-uydu-kontrol/**'
+      - 'app/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
       - '.github/workflows/build.yml'
   workflow_dispatch:
 
@@ -17,155 +15,115 @@ permissions:
   contents: write
 
 concurrency:
-  group: eymen-uydu-main-release
-  cancel-in-progress: false
+  group: eymen-tv-2
+  cancel-in-progress: true
 
 jobs:
-  build-and-publish:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
-      - name: Checkout EYMEN TV channel application
+      - name: Kaynak kodu al
         uses: actions/checkout@v4
         with:
-          persist-credentials: true
+          fetch-depth: 1
 
-      - name: Restore channel application source (initial migration only)
-        shell: bash
-        run: |
-          set -euo pipefail
-          if test -f uydu-packages/eymen-tv-0.4.b64; then
-            base64 -d uydu-packages/eymen-tv-0.4.b64 > /tmp/eymen-tv-04.zip
-            unzip -q /tmp/eymen-tv-04.zip
-          fi
-          test -f eymen-uydu-kontrol/build.sh
-          test -f eymen-uydu-kontrol/src/com/eymen/uydukontrol/PageNav.java
-          test -f eymen-uydu-kontrol/tests/PageNavTest.java
-          echo "Channel project source available; no launcher source present."
-
-      - name: Setup Java 17
+      - name: Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Android SDK 33
+      - name: Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Yazı tiplerini indir (Sora, Manrope)
         shell: bash
         run: |
-          set -euo pipefail
-          : "${ANDROID_HOME:=/usr/local/lib/android/sdk}"
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n 1)"
-          test -x "$SDKMANAGER"
-          yes | "$SDKMANAGER" --licenses || true
-          "$SDKMANAGER" 'platforms;android-33' 'build-tools;33.0.2'
+          mkdir -p app/src/main/assets/fonts
+          curl -fsSL -o app/src/main/assets/fonts/Sora.ttf "https://raw.githubusercontent.com/google/fonts/main/ofl/sora/Sora%5Bwght%5D.ttf" || echo "Sora indirilemedi, sistem yazı tipi kullanılacak"
+          curl -fsSL -o app/src/main/assets/fonts/Manrope.ttf "https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/Manrope%5Bwght%5D.ttf" || echo "Manrope indirilemedi, sistem yazı tipi kullanılacak"
+          ls -la app/src/main/assets/fonts
 
-      - name: Test ten-channel paging and remote navigation
+      - name: İmzalı APK derle
+        id: build
         shell: bash
         run: |
-          set -euo pipefail
-          cd eymen-uydu-kontrol
-          mkdir -p build/navtests
-          javac -d build/navtests src/com/eymen/uydukontrol/PageNav.java tests/PageNavTest.java
-          java -cp build/navtests PageNavTest
+          set -o pipefail
+          gradle :app:assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
+          test -s app/build/outputs/apk/release/app-release.apk
 
-      - name: Render transparent TV logo and 8K PNG directly from vector source
+      - name: GitHub Releases'a yayınla
+        id: release
+        if: steps.build.outcome == 'success' && github.event_name != 'pull_request'
         shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m pip install --quiet cairosvg pillow
-          mkdir -p dist
-          python3 - <<'PY'
-          import cairosvg
-          from PIL import Image
-          from pathlib import Path
-          src="eymen-uydu-kontrol/assets/brand_3d.svg"
-          runtime="eymen-uydu-kontrol/assets/brand_3d.png"
-          master="dist/EYMEN-TV-Logo-8K.png"
-          cairosvg.svg2png(url=src,write_to=runtime,output_width=1024,output_height=576)
-          cairosvg.svg2png(url=src,write_to=master,output_width=7680,output_height=4320)
-          for p,w,h in [(runtime,1024,576),(master,7680,4320)]:
-            with Image.open(p) as img:
-              img.load()
-              assert img.size==(w,h) and img.mode=="RGBA",(p,img.size,img.mode)
-            print("Logo image verified:",p,Path(p).stat().st_size)
-          PY
-
-      - name: Build EYMEN TV channel APK
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd eymen-uydu-kontrol
-          export TV_ANDROID_JAR="$ANDROID_HOME/platforms/android-33/android.jar"
-          export TV_BUILD_TOOLS="$ANDROID_HOME/build-tools/33.0.2"
-          bash build.sh
-          test -s build/EYMEN-TV-0.12.apk
-          ls -lh build/EYMEN-TV-0.12.apk
-
-      - name: Commit channel source and remove temporary packed archive
-        if: github.event_name != 'pull_request'
-        shell: bash
-        run: |
-          set -euo pipefail
-          if test -f uydu-packages/eymen-tv-0.4.b64; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A eymen-uydu-kontrol
-            git rm -f uydu-packages/eymen-tv-0.4.b64
-            git commit -m "source: move TV channel app into main and remove bootstrap archive [skip ci]"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
-
-      - name: Verify cross-TV input filtering and fallback
-        run: python3 eymen-uydu-kontrol/tests/cross_tv_smoke_test.py
-
-      - name: Test channel bulk actions and hourly rotating logo
-        run: python3 eymen-uydu-kontrol/tests/brand_bulk_smoke_test.py
-
-      - name: Verify no advertisement and hourly top-right logo plus website
-        run: python3 eymen-uydu-kontrol/tests/promo_smoke_test.py
-
-      - name: Verify real neon interface and functional TV settings
-        run: python3 eymen-uydu-kontrol/tests/neon_ui_smoke_test.py
-
-      - name: Publish EYMEN TV v0.12 neon interface
-        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
           set -euo pipefail
+          VERSION=$(grep -E 'versionName *= *"' app/build.gradle.kts | head -1 | sed -E 's/.*"(.*)".*/\1/')
+          TAG="eymen-tv-v$VERSION"
           mkdir -p dist
-          cp eymen-uydu-kontrol/build/EYMEN-TV-0.12.apk dist/EYMEN-TV-Kanal-Listesi-v0.12.apk
-          test -s dist/EYMEN-TV-Kanal-Listesi-v0.12.apk
-          cat > /tmp/eymen-release-notes.md <<'NOTES'
-          # EYMEN TV — Uydu Kanal Listesi v0.12
+          cp app/build/outputs/apk/release/app-release.apk "dist/EYMEN-TV-$VERSION.apk"
+          cp app/build/outputs/apk/release/app-release.apk dist/EYMEN-TV.apk
+          cat > notes.md <<'NOTES'
+          # EYMEN TV 2.0
 
-          - **Tam ekran genişliğindeki alt bant reklam ve fotoğraf/telefon/isim promosyonu kaldırıldı.**
-          - Sağ üstteki şeffaf 3D EYMEN TV logosu ve atasoyyazilim.com adresi korunur.
-          - Bu küçük köşe markası yalnızca **her 60 dakikada bir, 15 saniye** görünür; sürekli açık değildir.
-          - Son otomatik gösterim zamanı TV'de saklanır; uygulama yeniden açıldığında sıklık sıfırlanmaz.
-          - MENU → Uygulama ayarları → Görünüm, ses ve diğer ayarlar → **Sağ üst logo ve web adresini göster (test)** ile önizleme yapılabilir.
-          - 10 kanallık sayfalar, kumanda gezinmesi, kanal ses izinleri, toplu seçerek silme, geri getirme ve kanal logoları değiştirilmedi.
-          - Kaynak kod ve TV ekranındaki geniş reklam görselleri APK paketinden çıkarıldı.
-          - **Yeni tasarım:** Gerçek kanal ekranında koyu lacivert katmanlar, neon pembe/mavi seçim çerçeveleri, kanal logosu kartları, program bilgisi ve sürüm etiketleri.
-          - **Yeni kumandalı ayarlar:** Koyu tema menüsü ve kanal logoları / EPG / sağ üst logo / saatlik web adresi için aktif aç-kapat seçenekleri.
-          - TV yayını gerçek tuner kaynağından gelir; tanıtım görsellerindeki videolar taklit edilmez.
-          - Önceki v0.11 ve v0.10 APK sürümleri GitHub Releases içinde ayrı korunur.
+          Baştan yazılmış yeni sürüm. v0.12'nin üzerine güncelleme olarak kurulur; gizlenen kanallar, favoriler, kanal adları ve özel logolar korunur.
 
-          **Bu APK yalnızca Android uyumlu TV'lerde test sürümüdür.** DTVKit, Vestel ve Whale TV üzerinde kanal oynatma ve ses izni cihaz üreticisi tarafından sınırlandırılabilir. Eski kurulumla imza uyuşmazsa yükleme/güncelleme başarısız olabilir.
+          - Açılışta EYMEN TV logosu ve M. Muhammet Atasoy imzası
+          - Yayının üstünde açılan kanal bandı: şimdi ve sonraki program, ilerleme, ses ve görüntü bilgisi
+          - Kanal rehberi: kategoriler, arama, her kanalın şu anki programı
+          - Yayın akışı ızgarası ve program hatırlatıcıları
+          - Ana ekran, yeni ayarlar ve kanal yönetimi (sırala, gizle, ad, logo, kategori, PIN kilidi)
+          - Uydu sinyali kesilince internet yayınına otomatik geçiş (M3U listesi gerekir), sinyal gelince uyduya dönüş
+          - Telefon kumandası: TV'deki QR kodu okutun, telefonun tarayıcısında açılır
+          - Uygulama içinden güncelleme denetimi
+
+          TV'ye kurmak için: Downloader uygulamasına şu adresi yazın
+          https://github.com/mmustafatasoy/EymenTv/releases/latest/download/EYMEN-TV.apk
           NOTES
-          if ! gh release view uydu-tv-v0.12 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create uydu-tv-v0.12 dist/EYMEN-TV-Kanal-Listesi-v0.12.apk dist/EYMEN-TV-Logo-8K.png \
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "dist/EYMEN-TV-$VERSION.apk" dist/EYMEN-TV.apk --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file notes.md --latest
+          else
+            gh release create "$TAG" "dist/EYMEN-TV-$VERSION.apk" dist/EYMEN-TV.apk \
               --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
-              --title "EYMEN TV — v0.12 • Neon Tasarım ve Kumandalı Ayarlar" \
-              --notes-file /tmp/eymen-release-notes.md \
+              --title "EYMEN TV $VERSION" \
+              --notes-file notes.md \
               --latest
-          else
-            gh release upload uydu-tv-v0.12 dist/EYMEN-TV-Kanal-Listesi-v0.12.apk dist/EYMEN-TV-Logo-8K.png \
-              --repo "$GITHUB_REPOSITORY" --clobber
           fi
-          gh release view uydu-tv-v0.12 --repo "$GITHUB_REPOSITORY" --json url,assets
-          gh release view uydu-tv-v0.12 --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | select(.name == "EYMEN-TV-Kanal-Listesi-v0.12.apk" and .size > 0) | .name' | grep -Fx 'EYMEN-TV-Kanal-Listesi-v0.12.apk'
 
+      - name: Sonucu ci-logs dalına yaz
+        if: always()
+        shell: bash
+        env:
+          BUILD_RESULT: ${{ steps.build.outcome }}
+          RELEASE_RESULT: ${{ steps.release.outcome }}
+        run: |
+          mkdir -p /tmp/ci
+          touch build.log
+          {
+            echo "sha=$GITHUB_SHA"
+            echo "build=$BUILD_RESULT"
+            echo "release=$RELEASE_RESULT"
+            echo "run=$GITHUB_RUN_ID"
+            echo "---- errors"
+            grep -E "^e: |error:|What went wrong|Could not|FAILED" -A4 build.log | head -400
+            echo "---- tail"
+            tail -150 build.log
+          } > /tmp/ci/latest.txt
+          cp build.log /tmp/ci/build.log
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan ci-logs-tmp
+          git rm -rf --cached . >/dev/null
+          mkdir -p logs
+          cp /tmp/ci/latest.txt logs/latest.txt
+          cp /tmp/ci/build.log logs/build.log
+          git add -f logs/latest.txt logs/build.log
+          git commit -m "ci: build=$BUILD_RESULT release=$RELEASE_RESULT $GITHUB_SHA [skip ci]"
+          git push -f origin HEAD:ci-logs

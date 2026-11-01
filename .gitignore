@@ -7,3 +7,11 @@ eymen-uydu-kontrol/build/
 *.idsig
 local.properties
 .DS_Store
+
+# Gradle / Android Studio (EYMEN TV 2.0)
+.gradle/
+build/
+app/build/
+.idea/
+*.iml
+app/src/main/assets/fonts/*.ttf
