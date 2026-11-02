@@ -1,9 +1,9 @@
 # Kanal listesi raporu
 
-- Tarih: 2026-11-01 23:51 UTC
+- Tarih: 2026-11-02 04:16 UTC
 - Denenen yayın: 166
-- Listede: 127 kanal (118 çalışıyor, 9 Türkiye dışından kapalı, TV'de yeniden denenir)
-- Çalışmadığı için çıkarılan: 39
+- Listede: 129 kanal (121 çalışıyor, 8 Türkiye dışından kapalı, TV'de yeniden denenir)
+- Çalışmadığı için çıkarılan: 37
 
 ## Listedeki kanallar
 
@@ -68,6 +68,7 @@
 - Genel · Aras TV · çalışıyor
 - Genel · ATV Alanya · çalışıyor
 - Genel · ATV Avrupa · çalışıyor
+- Genel · ATV (Turkiye) · çalışıyor
 - Genel · Bir TV · çalışıyor
 - Genel · Bloomberg HT · Türkiye dışından kapalı
 - Genel · Bric ve Satranc TV · çalışıyor
@@ -100,6 +101,7 @@
 - Genel · MaviKaradeniz TV · çalışıyor
 - Genel · Meltem TV · çalışıyor
 - Genel · Mercan TV · çalışıyor
+- Genel · NOW · çalışıyor
 - Genel · NTV (Turkiye) · çalışıyor
 - Genel · Persiana Turkiye · çalışıyor
 - Genel · PowerTurk TV · çalışıyor
@@ -121,7 +123,7 @@
 - Genel · TRT EBA · çalışıyor
 - Genel · TRT EBA Ilkokul · çalışıyor
 - Genel · TRT EBA Lise · çalışıyor
-- Genel · TRT Genc · Türkiye dışından kapalı
+- Genel · TRT Genc · çalışıyor
 - Genel · TRT Kurdi · çalışıyor
 - Genel · TRT Turk · çalışıyor
 - Genel · Turksat Tanitim · Türkiye dışından kapalı
@@ -139,7 +141,6 @@
 
 - Al-Rafidain TV · HTTP 502
 - Altas TV · URLError
-- ATV (Turkiye) · TimeoutError
 - Benguturk TV · URLError
 - Beyaz TV · RemoteDisconnected
 - Bursa TV · HTTP 404
@@ -163,7 +164,6 @@
 - MovieSmart Turk · ConnectionResetError
 - MTurk TV · URLError
 - Natural TV · URLError
-- NOW · TimeoutError
 - On4 TV · URLError
 - Qaf TV · HTTP 204 text/plain
 - Show Turk · HTTP 404
