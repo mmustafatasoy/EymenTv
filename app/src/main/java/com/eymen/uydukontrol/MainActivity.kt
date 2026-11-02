@@ -21,6 +21,14 @@ class MainActivity : ComponentActivity() {
         if (::app.isInitialized) app.onPermissionResult(granted)
     }
 
+    private var storageCallback: (() -> Unit)? = null
+
+    private val storageLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        val cb = storageCallback
+        storageCallback = null
+        cb?.invoke()
+    }
+
     private val documentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val cb = pickCallback
         pickCallback = null
@@ -66,6 +74,16 @@ class MainActivity : ComponentActivity() {
             permissionLauncher.launch(AppState.PERM_TV)
         } catch (e: Exception) {
             app.onPermissionResult(false)
+        }
+    }
+
+    fun requestStorage(done: () -> Unit) {
+        storageCallback = done
+        try {
+            storageLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+        } catch (e: Exception) {
+            storageCallback = null
+            done()
         }
     }
 

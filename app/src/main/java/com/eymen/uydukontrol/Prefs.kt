@@ -34,6 +34,12 @@ class Prefs(context: Context) {
         sp.edit().putInt(key, v).apply()
     }
 
+    fun long(key: String, def: Long): Long = try { sp.getLong(key, def) } catch (e: Exception) { def }
+
+    fun putLong(key: String, v: Long) {
+        sp.edit().putLong(key, v).apply()
+    }
+
     fun str(key: String, def: String): String = try { sp.getString(key, def) ?: def } catch (e: Exception) { def }
 
     fun putStr(key: String, v: String?) {

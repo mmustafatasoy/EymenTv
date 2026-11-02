@@ -8,8 +8,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
-import java.io.BufferedReader
-import java.io.InputStreamReader
+import java.io.BufferedInputStream
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.io.OutputStream
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -65,12 +67,17 @@ class RemoteServer(private val app: AppState, private val token: String) {
     private fun handle(socket: Socket) {
         try {
             socket.use { s ->
-                s.soTimeout = 5000
-                val reader = BufferedReader(InputStreamReader(s.getInputStream(), Charsets.UTF_8))
-                val requestLine = reader.readLine() ?: return
-                while (true) {
-                    val line = reader.readLine() ?: break
-                    if (line.isEmpty()) break
+                s.soTimeout = 15000
+                val input = BufferedInputStream(s.getInputStream())
+                val head = readHead(input) ?: return
+                val lines = head.split("\r\n")
+                val requestLine = lines.firstOrNull() ?: return
+                var length = 0
+                for (line in lines.drop(1)) {
+                    val i = line.indexOf(':')
+                    if (i > 0 && line.substring(0, i).trim().equals("content-length", ignoreCase = true)) {
+                        length = line.substring(i + 1).trim().toIntOrNull() ?: 0
+                    }
                 }
                 val parts = requestLine.split(" ")
                 val target = if (parts.size > 1) parts[1] else "/"
@@ -102,6 +109,11 @@ class RemoteServer(private val app: AppState, private val token: String) {
                         val q = query["q"] ?: ""
                         send(out, 200, "application/json; charset=utf-8", (onMain { app.remoteSearch(q) } ?: "[]").toByteArray())
                     }
+                    "/api/one" -> {
+                        val k = query["key"] ?: ""
+                        send(out, 200, "application/json; charset=utf-8", (onMain { app.remoteChannel(k) } ?: "{}").toByteArray())
+                    }
+                    "/api/logo" -> receiveLogo(out, input, length, query["key"] ?: "")
                     "/api/text" -> {
                         val v = query["v"] ?: ""
                         onMain { app.remoteText(v) }
@@ -112,6 +124,54 @@ class RemoteServer(private val app: AppState, private val token: String) {
             }
         } catch (e: Exception) {
         }
+    }
+
+    /** Reads the request line and headers byte by byte, so an uploaded picture stays untouched after them. */
+    private fun readHead(input: InputStream): String? {
+        val head = ByteArrayOutputStream()
+        var matched = 0
+        while (head.size() < 16384) {
+            val b = input.read()
+            if (b < 0) break
+            head.write(b)
+            matched = when {
+                b == 13 && (matched == 0 || matched == 2) -> matched + 1
+                b == 10 && (matched == 1 || matched == 3) -> matched + 1
+                b == 13 -> 1
+                else -> 0
+            }
+            if (matched == 4) break
+        }
+        return if (head.size() == 0) null else head.toString("UTF-8")
+    }
+
+    private fun receiveLogo(out: OutputStream, input: InputStream, length: Int, key: String) {
+        val bad = "{\"ok\":false,\"error\":\"Resim okunamadı\"}".toByteArray()
+        if (length <= 0 || length > MAX_LOGO_BYTES) {
+            send(out, 200, "application/json; charset=utf-8", bad)
+            return
+        }
+        val body = ByteArray(length)
+        var got = 0
+        while (got < length) {
+            val n = input.read(body, got, length - got)
+            if (n < 0) break
+            got += n
+        }
+        val ch = onMain { app.all.firstOrNull { it.key == key } }
+        val bmp = if (ch != null && got == length) {
+            try {
+                Logos.saveCustom(app.ctx, ch.key, ByteArrayInputStream(body))
+            } catch (e: Exception) {
+                null
+            }
+        } else null
+        if (ch == null || bmp == null) {
+            send(out, 200, "application/json; charset=utf-8", bad)
+            return
+        }
+        onMain { app.onLogoReceived(ch, bmp) }
+        ok(out)
     }
 
     private fun ok(out: OutputStream) = send(out, 200, "application/json; charset=utf-8", "{\"ok\":true}".toByteArray())
@@ -164,6 +224,8 @@ class RemoteServer(private val app: AppState, private val token: String) {
     }
 
     companion object {
+        private const val MAX_LOGO_BYTES = 12_000_000
+
         fun localIp(): String? {
             try {
                 val interfaces = NetworkInterface.getNetworkInterfaces() ?: return null

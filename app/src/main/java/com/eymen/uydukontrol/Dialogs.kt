@@ -8,12 +8,16 @@ import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,13 +27,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.delay
 import kotlin.math.max
 
 @Composable
@@ -42,6 +50,8 @@ fun DialogLayer(app: AppState, d: Dialog) {
             is Dialog.Confirm -> ConfirmDialog(d)
             is Dialog.ReminderDue -> ReminderDialog(app, d)
             is Dialog.Info -> InfoDialog(d)
+            is Dialog.UpdateNotice -> UpdateNoticeDialog(d)
+            is Dialog.LogoPicker -> LogoPickerDialog(app, d)
         }
     }
 }
@@ -221,6 +231,42 @@ private fun InfoDialog(d: Dialog.Info) {
         T(d.message, 16, C.Fg2, 500, maxLines = 12, lineHeight = 24)
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
             DialogButton("Tamam", true, Modifier.width(160.dp))
+        }
+    }
+}
+
+/** Comes up by itself when a newer version is found, on whatever screen the user is. */
+@Composable
+private fun UpdateNoticeDialog(d: Dialog.UpdateNotice) {
+    val sign = remember { Animatable(0f) }
+    val site = remember { Animatable(0f) }
+    LaunchedEffect(d) {
+        delay(350)
+        sign.animateTo(1f, tween(1700, easing = LinearEasing))
+        site.animateTo(1f, tween(500))
+    }
+    Column(
+        Modifier.width(660.dp)
+            .shadow(30.dp, RoundedCornerShape(24.dp))
+            .panel(Color(0xFC0A1224), 24, C.Gold, 2)
+            .padding(horizontal = 34.dp, vertical = 28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        BrandMark(44)
+        T("YENİ SÜRÜM ${d.info.version}", 13, C.Gold, 800, spacing = 2f)
+        T("Güncellemeniz var", 36, C.Fg, 600, display = true)
+        T("Lütfen güncelleyin. Kanallarınız ve ayarlarınız silinmez.", 16, C.Fg2, 500, align = TextAlign.Center, maxLines = 2)
+        for (note in d.info.notes) T(note, 14, C.Mut, 500, align = TextAlign.Center)
+        Spacer(Modifier.height(6.dp))
+        SignatureLine(sign.value, 44, 340)
+        Box(Modifier.alpha(site.value)) {
+            T("atasoyyazilim.com", 17, C.Gold, 700, spacing = 1f)
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            DialogButton("Şimdi güncelle", d.index == 0, Modifier.weight(1f))
+            DialogButton("Sonra", d.index == 1, Modifier.weight(1f))
         }
     }
 }

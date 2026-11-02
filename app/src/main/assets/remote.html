@@ -68,6 +68,21 @@ h2{margin:4px 0 0;font-size:12px;font-weight:800;letter-spacing:.12em;color:var(
 .text p{margin:0;font-size:13px;color:var(--gold);font-weight:700}
 .nums{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
 .nums button{height:44px;border-radius:12px;font-weight:800;font-size:16px}
+.tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:4px;border-radius:14px;background:var(--glass);border:1px solid var(--line)}
+.tabs button{height:44px;border:0;border-radius:10px;background:transparent;color:var(--mut);font-weight:800}
+.tabs button.on{background:var(--fg);color:#0A1224}
+.pane{display:flex;flex-direction:column;gap:16px}
+.pane[hidden]{display:none}
+.pane h1{margin:0;font-size:24px;font-weight:800}
+.picked{padding:12px 14px;border-radius:12px;background:var(--glass);border:1px solid var(--line);font-weight:700}
+.picked.on{border-color:var(--gold);color:var(--gold)}
+.shot{min-height:150px;border-radius:14px;background:#EEF1F6;display:grid;place-items:center;overflow:hidden;color:#3A4459;font-weight:700}
+.shot canvas{display:none;max-width:100%;max-height:220px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.two label{height:50px;border-radius:12px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--line);font-weight:700;cursor:pointer}
+.send{width:100%;height:56px;font-size:17px}
+.send:disabled{background:#2B3858;color:var(--mut)}
+.note{margin:0;text-align:center;font-size:14px;color:var(--mut);min-height:20px}
 footer{text-align:center;font-size:12px;color:var(--dim);line-height:1.5;padding-top:6px}
 </style>
 </head>
@@ -78,6 +93,29 @@ footer{text-align:center;font-size:12px;color:var(--dim);line-height:1.5;padding
     <div id="conn" class="pill"><span></span><em id="connText" style="font-style:normal">Bağlanıyor…</em></div>
   </header>
 
+  <div class="tabs">
+    <button id="tabRemote" class="on" type="button">Kumanda</button>
+    <button id="tabLogo" type="button">Logolar</button>
+  </div>
+
+  <div class="pane" id="paneLogo" hidden>
+    <h1>Kanala logo ekle</h1>
+    <form class="search" id="logoForm">
+      <input id="lq" type="search" placeholder="Kanal ara" aria-label="Kanal ara" autocomplete="off">
+      <button class="go" type="submit">Ara</button>
+    </form>
+    <div class="results" id="logoResults"></div>
+    <div class="picked" id="picked">Önce bir kanal seç</div>
+    <div class="shot"><canvas id="logoCanvas"></canvas><span id="shotText">Resim seçilmedi</span></div>
+    <div class="two">
+      <label>Galeriden seç<input id="fileGallery" type="file" accept="image/*" hidden></label>
+      <label>Fotoğraf çek<input id="fileCamera" type="file" accept="image/*" capture="environment" hidden></label>
+    </div>
+    <button class="go send" id="logoSend" type="button" disabled>TV'ye gönder</button>
+    <p class="note" id="logoNote">TV ile aynı Wi-Fi'da olmalısın.</p>
+  </div>
+
+  <div class="pane" id="paneRemote">
   <div class="now">
     <div class="tile" id="num">–</div>
     <div class="meta">
@@ -136,6 +174,7 @@ footer{text-align:center;font-size:12px;color:var(--dim);line-height:1.5;padding
 
   <h2>FAVORİLER</h2>
   <div class="favs" id="favs"></div>
+  </div>
 
   <footer>TV'deki QR kodu okutarak bağlandın.<br>Uygulama kurmadan telefonun tarayıcısında çalışır.</footer>
 </div>
@@ -210,6 +249,75 @@ footer{text-align:center;font-size:12px;color:var(--dim);line-height:1.5;padding
     var v = $('textInput').value;
     api('/api/text', {v:v}).then(function(){ $('textInput').value = ''; setTimeout(refresh, 400); }).catch(function(){ setConn(false); });
   });
+  function showPane(logo){
+    $('paneLogo').hidden = !logo;
+    $('paneRemote').hidden = logo;
+    $('tabLogo').className = logo ? 'on' : '';
+    $('tabRemote').className = logo ? '' : 'on';
+  }
+  $('tabRemote').addEventListener('click', function(){ showPane(false); });
+  $('tabLogo').addEventListener('click', function(){ showPane(true); });
+  var logoChannel = null, logoReady = false;
+  function updateSend(){ $('logoSend').disabled = !(logoChannel && logoReady); }
+  function pickChannel(c){
+    logoChannel = c;
+    $('picked').textContent = c.number + ' · ' + c.name;
+    $('picked').className = 'picked on';
+    $('logoResults').innerHTML = '';
+    $('logoNote').textContent = 'TV ile aynı Wi-Fi\'da olmalısın.';
+    updateSend();
+  }
+  $('logoForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var box = $('logoResults'); box.innerHTML = '';
+    api('/api/search', {q:$('lq').value.trim()}).then(function(list){
+      list.slice(0, 8).forEach(function(c){
+        var b = document.createElement('button'); b.type = 'button';
+        var em = document.createElement('em'); em.textContent = c.number;
+        var sp = document.createElement('span');
+        var st = document.createElement('strong'); st.textContent = c.name;
+        sp.appendChild(st); b.appendChild(em); b.appendChild(sp);
+        b.addEventListener('click', function(){ pickChannel(c); });
+        box.appendChild(b);
+      });
+    }).catch(function(){ setConn(false); });
+  });
+  function drawFile(file){
+    if (!file) return;
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function(){
+      var c = $('logoCanvas'), k = Math.min(512 / img.width, 512 / img.height, 1);
+      c.width = Math.max(1, Math.round(img.width * k));
+      c.height = Math.max(1, Math.round(img.height * k));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.style.display = 'block';
+      $('shotText').style.display = 'none';
+      logoReady = true;
+      $('logoSend').textContent = "TV'ye gönder";
+      updateSend();
+    };
+    img.onerror = function(){ $('logoNote').textContent = 'Bu resim açılamadı, başka bir resim seç.'; };
+    img.src = url;
+  }
+  $('fileGallery').addEventListener('change', function(e){ drawFile(e.target.files[0]); });
+  $('fileCamera').addEventListener('change', function(e){ drawFile(e.target.files[0]); });
+  $('logoSend').addEventListener('click', function(){
+    var note = $('logoNote');
+    note.textContent = 'Gönderiliyor…';
+    $('logoCanvas').toBlob(function(blob){
+      var q = new URLSearchParams({t:t, key:logoChannel.key});
+      fetch('/api/logo?' + q.toString(), {method:'POST', body:blob}).then(function(r){ return r.json(); }).then(function(j){
+        note.textContent = j.ok ? logoChannel.name + ' logosu TV\'de güncellendi.' : (j.error || 'Gönderilemedi');
+        if (j.ok) $('logoSend').textContent = "TV'ye gönderildi";
+      }).catch(function(){ note.textContent = 'Gönderilemedi, Wi-Fi bağlantısına bak.'; });
+    }, 'image/png');
+  });
+  var logoKey = new URLSearchParams(location.search).get('logo');
+  if (logoKey) {
+    showPane(true);
+    api('/api/one', {key:logoKey}).then(function(c){ if (c && c.key) pickChannel(c); }).catch(function(){ setConn(false); });
+  }
   refresh();
   setInterval(refresh, 4000);
 })();

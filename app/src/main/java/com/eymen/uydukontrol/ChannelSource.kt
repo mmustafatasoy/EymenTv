@@ -364,6 +364,41 @@ object Logos {
         return map
     }
 
+    /** The logos that ship with the app, the ones that look like this channel's name first. */
+    fun bundled(ctx: Context, ch: Channel): List<String> {
+        val names = try {
+            (ctx.assets.list("logos") ?: emptyArray()).filter { it.endsWith(".png") }.map { it.removeSuffix(".png") }
+        } catch (e: Exception) {
+            emptyList()
+        }
+        val key = ch.norm
+        fun score(name: String): Int {
+            val n = name.replace(Regex("[^a-z0-9]"), "")
+            return when {
+                n == key -> 0
+                key.isNotEmpty() && (n.contains(key) || key.contains(n)) -> 1
+                key.length >= 3 && n.startsWith(key.take(3)) -> 2
+                else -> 3
+            }
+        }
+        return names.sortedWith(compareBy<String>({ score(it) }, { it }))
+    }
+
+    fun asset(ctx: Context, name: String): Bitmap? = try {
+        decode(ctx.assets.open("logos/$name.png"), 160, 90)
+    } catch (e: Exception) {
+        null
+    }
+
+    fun saveAsset(ctx: Context, key: String, name: String): Bitmap =
+        ctx.assets.open("logos/$name.png").use { saveCustom(ctx, key, it) }
+
+    fun thumb(file: File): Bitmap? = try {
+        decode(file.inputStream(), 160, 90)
+    } catch (e: Exception) {
+        null
+    }
+
     fun customFile(ctx: Context, key: String): File {
         val safe = key.replace(Regex("[^A-Za-z0-9_-]"), "_")
         return File(File(ctx.filesDir, "channel_logos"), "channel_$safe.png")
@@ -426,6 +461,43 @@ object Logos {
             tmp.delete()
         }
         return bmp
+    }
+}
+
+/** Pictures on a USB stick, for choosing a channel logo with the remote. */
+object UsbImages {
+    private val extensions = listOf("png", "jpg", "jpeg", "webp")
+
+    fun scan(limit: Int = 60): List<File> {
+        val out = ArrayList<File>()
+        for (base in listOf("/storage", "/mnt/media_rw")) {
+            val roots = try {
+                File(base).listFiles()
+            } catch (e: Exception) {
+                null
+            } ?: continue
+            for (root in roots) {
+                if (root.isDirectory && root.name != "emulated" && root.name != "self") walk(root, 0, out, limit)
+            }
+        }
+        return out.distinctBy { it.name + it.length() }
+    }
+
+    private fun walk(dir: File, depth: Int, out: MutableList<File>, limit: Int) {
+        if (depth > 3 || out.size >= limit) return
+        val list = try {
+            dir.listFiles()
+        } catch (e: Exception) {
+            null
+        } ?: return
+        for (f in list) {
+            if (out.size >= limit) return
+            if (f.isDirectory) {
+                if (!f.name.startsWith(".") && f.name != "Android") walk(f, depth + 1, out, limit)
+            } else if (f.extension.lowercase(Locale.ROOT) in extensions && f.length() < 15_000_000L) {
+                out.add(f)
+            }
+        }
     }
 }
 

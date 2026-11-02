@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.max
 
 private val sectionHelp = listOf(
-    "Sırayı değiştir, gizle, yeniden adlandır, kategori ve logo ver. TV'nin asıl kanal listesi değişmez.",
+    "Sırasını değiştir, sil, gizle, adını ve logosunu değiştir. Numaralar senin sırana göre yenilenir.",
     "Kanal logoları, köşe logosu, kanal bandının ekranda kalma süresi ve açılış imzası.",
     "İzlediğin kanalın ses dili ve altyazısı.",
     "Seçtiğin kanalları 4 haneli PIN ile kilitle. Kanal yönetiminden bir kanal seçip kilitleyebilirsin.",
@@ -158,13 +158,14 @@ private fun ChannelManager(app: AppState) {
             listOf(
                 Hint("OK", "İşlemler"),
                 Hint("", "İşaretle", C.Green),
-                Hint("", "İşaretlileri gizle / göster", C.Red),
-                Hint("", "Taşı", C.Yellow)
+                Hint("", "Gizle / göster", C.Red),
+                Hint("", "Taşı", C.Yellow),
+                Hint("", "Sil", C.Blue)
             ),
             size = 12
         )
         Spacer(Modifier.weight(1f))
-        T("${list.size} kanal · ${app.hidden.size} gizli" + (if (app.checked.isNotEmpty()) " · ${app.checked.size} işaretli" else ""), 13, C.Mut, 600)
+        T("${list.size} kanal · ${app.hidden.size} gizli · ${app.trash.size} silinen" + (if (app.checked.isNotEmpty()) " · ${app.checked.size} işaretli" else ""), 13, C.Mut, 600)
     }
 
     Row(Modifier.padding(horizontal = 14.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -211,7 +212,7 @@ private fun ChannelManager(app: AppState) {
                     if (app.isFav(ch)) StarIcon(14, if (focused && !isMoving) C.FocusInk else C.Gold)
                 }
                 if (isMoving) {
-                    T("▲▼ ile taşı · OK bırak", 12, C.Gold, 700)
+                    T(if (app.moveEntry.isEmpty()) "Numara yaz ya da ▲▼ · OK bırak" else "Yeni numara: ${app.moveEntry} · OK", 13, C.Gold, 700)
                 } else {
                     T(ch.category, 13, if (focused) C.FocusSub else C.Fg2, 600, modifier = Modifier.width(110.dp))
                     T(if (isHidden) "Gizli" else "Görünür", 13, if (isHidden) C.Live else if (focused) C.FocusSub else C.Fg2, 700, modifier = Modifier.width(80.dp))

@@ -19,10 +19,11 @@ v0.12 ile aynı paket adı ve imzayı kullanır; eski sürümün üzerine günce
 - Kanal rehberi: kategoriler (Haber, Spor, Çocuk, Belgesel, Müzik, Film, Dini, Radyo, İnternet), arama
 - Yayın akışı ızgarası, canlı önizleme ve program hatırlatıcıları
 - Ana ekran: kaldığın yerden, favoriler, hatırlatıcılar
-- Ayarlar ve kanal yönetimi: sırala, gizle, toplu işaretle, yeniden adlandır, logo, kategori, PIN kilidi
+- Ayarlar ve kanal yönetimi: sırala, numara ver, sil, gizle, toplu işaretle, yeniden adlandır, logo, kategori, PIN kilidi
+- Kanala logo ekleme: telefondan QR ile, hazır logolardan ya da USB'den
 - Uydu yoksa internetten devam et (M3U listesi adresi veya USB'den dosya)
 - Telefon kumandası: TV'deki QR kodu okutun, telefonun tarayıcısında açılır
-- Uygulama içinden güncelleme denetimi (GitHub Releases)
+- İnternete bağlanınca yeni sürüm uyarısı; EYMEN OS varsa kurulumu o yapar
 
 ## Kumanda
 

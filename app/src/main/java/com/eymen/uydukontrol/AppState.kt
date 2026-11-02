@@ -3,8 +3,12 @@ package com.eymen.uydukontrol
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.media.AudioManager
 import android.media.tv.TvContract
+import android.net.ConnectivityManager
+import android.net.Network
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.KeyEvent
@@ -15,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.content.pm.PackageInfoCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -63,6 +68,8 @@ class AppState(val activity: MainActivity) {
     val favorites = mutableStateListOf<String>()
     val hidden = mutableStateListOf<String>()
     val locked = mutableStateListOf<String>()
+    val deleted = mutableStateListOf<String>()
+    val trash = mutableStateListOf<Channel>()
     val reminders = mutableStateListOf<Reminder>()
     private val unlocked = HashSet<String>()
 
@@ -106,6 +113,7 @@ class AppState(val activity: MainActivity) {
     var setInPane by mutableStateOf(false)
     var setIndex by mutableStateOf(0)
     var moving by mutableStateOf<Channel?>(null)
+    var moveEntry by mutableStateOf("")
     val checked = mutableStateListOf<String>()
 
     // Phone remote and updates
@@ -114,6 +122,9 @@ class AppState(val activity: MainActivity) {
     var remoteQr by mutableStateOf<ImageBitmap?>(null)
     var updateStatus by mutableStateOf("")
     var updateInfo by mutableStateOf<Updater.Info?>(null)
+    private var pendingNotice: Updater.Info? = null
+    private var lastUpdateCheck = 0L
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
     // Built-in internet list and stream health
     var builtInList by mutableStateOf(prefs.bool("builtInList", true))
@@ -126,6 +137,7 @@ class AppState(val activity: MainActivity) {
         favorites.addAll(prefs.stringSet("favorites"))
         hidden.addAll(prefs.stringSet("hidden"))
         locked.addAll(prefs.stringSet("locked"))
+        deleted.addAll(prefs.stringSet("deleted"))
         deadWeb.addAll(prefs.stringSet("deadWeb"))
         reminders.addAll(prefs.loadReminders())
         if (!splashEnabled) screen = Screen.LIVE
@@ -158,6 +170,14 @@ class AppState(val activity: MainActivity) {
             }
         }
         if (remoteEnabled) startRemote()
+        watchNetwork()
+        scope.launch {
+            while (isActive) {
+                delay(UPDATE_PERIOD)
+                autoCheck(true)
+            }
+        }
+        if (screen != Screen.SPLASH) afterSplash()
     }
 
     fun onPermissionResult(granted: Boolean) {
@@ -212,13 +232,17 @@ class AppState(val activity: MainActivity) {
             c.name = prefs.customName(c.key) ?: c.originalName
             c.category = prefs.customCategory(c.key) ?: Names.category(c.norm, c.groupTitle, c.isRadio)
         }
+        val (removed, kept) = combined.partition { deleted.contains(it.key) }
+        trash.clear()
+        trash.addAll(removed)
         val ranks = HashMap<String, Int>()
         prefs.order.split(',').filter { it.isNotBlank() }.forEachIndexed { i, k -> ranks[k] = i }
-        val sorted = combined.withIndex()
+        val sorted = kept.withIndex()
             .sortedWith(compareBy<IndexedValue<Channel>>({ ranks[it.value.key] ?: Int.MAX_VALUE }, { it.index }))
             .map { it.value }
         all.clear()
         all.addAll(sorted)
+        renumber()
         tvCount = tv.size
         webCount = web.size
         matchedCount = matched
@@ -248,6 +272,17 @@ class AppState(val activity: MainActivity) {
         if (screen != Screen.SPLASH) return
         screen = Screen.LIVE
         if (current != null) showBanner()
+        afterSplash()
+    }
+
+    private fun afterSplash() {
+        val seen = prefs.str("seenVersion", "")
+        if (seen != BuildConfig.VERSION_NAME) {
+            if (seen.isNotEmpty()) toast("EYMEN TV ${BuildConfig.VERSION_NAME} sürümüne güncellendi")
+            prefs.putStr("seenVersion", BuildConfig.VERSION_NAME)
+        }
+        val waiting = pendingNotice
+        if (waiting != null) offerUpdate(waiting)
     }
 
     // ---------------------------------------------------------------- lists
@@ -601,6 +636,20 @@ class AppState(val activity: MainActivity) {
         prefs.order = all.joinToString(",") { it.key }
     }
 
+    /** Once the user has arranged the list, a channel's number is simply its place in the list. */
+    private fun renumber() {
+        if (prefs.order.isBlank()) return
+        all.forEachIndexed { i, c -> c.number = (i + 1).toString() }
+    }
+
+    fun startMove(ch: Channel) {
+        val i = all.indexOf(ch)
+        if (i >= 0) setIndex = i
+        moving = ch
+        moveEntry = ""
+        toast("Yeni numarayı yaz ya da ▲▼ ile taşı, OK ile bırak")
+    }
+
     fun moveChannel(ch: Channel, delta: Int) {
         val i = all.indexOf(ch)
         val j = i + delta
@@ -608,6 +657,75 @@ class AppState(val activity: MainActivity) {
         all.removeAt(i)
         all.add(j, ch)
         saveOrder()
+        renumber()
+    }
+
+    /** Puts the channel straight at this number; the ones in between shift by one. */
+    fun moveChannelTo(ch: Channel, number: Int) {
+        val i = all.indexOf(ch)
+        if (i < 0 || all.isEmpty()) return
+        val j = (number - 1).coerceIn(0, all.size - 1)
+        all.removeAt(i)
+        all.add(j, ch)
+        saveOrder()
+        renumber()
+        setIndex = j
+        finishMove()
+        toast("${ch.name} artık ${j + 1}. kanal")
+    }
+
+    fun finishMove() {
+        moving = null
+        moveEntry = ""
+        writeSnapshot()
+    }
+
+    fun confirmDelete(keys: List<String>) {
+        if (keys.isEmpty()) return
+        val first = all.firstOrNull { it.key == keys[0] }?.name ?: "Kanal"
+        val title = if (keys.size == 1) "$first silinsin mi?" else "${keys.size} kanal silinsin mi?"
+        pushDialog(
+            Dialog.Confirm(
+                title,
+                "Bütün EYMEN listelerinden kalkar, numaralar kapanır. Silinen kanallar bölümünden geri getirebilirsin.",
+                "Evet, sil",
+                "Vazgeç"
+            ) { deleteChannels(keys) }
+        )
+    }
+
+    private fun deleteChannels(keys: List<String>) {
+        saveOrder()
+        for (k in keys) if (!deleted.contains(k)) deleted.add(k)
+        prefs.saveSet("deleted", deleted)
+        checked.clear()
+        val name = all.firstOrNull { it.key == keys[0] }?.name
+        val cur = current
+        merge()
+        saveOrder()
+        setIndex = setIndex.coerceIn(0, max(0, all.size - 1))
+        if (cur != null && keys.contains(cur.key)) {
+            playback.stop()
+            current = null
+            startPlaybackIfNeeded()
+        }
+        toast(if (keys.size == 1 && name != null) "$name silindi" else "${keys.size} kanal silindi")
+    }
+
+    fun showTrash() {
+        val list = trash.toList()
+        if (list.isEmpty()) {
+            toast("Silinen kanal yok")
+            return
+        }
+        pushDialog(Dialog.Choice("Silinen kanallar", list.map { it.name }, "OK ile geri getir") { i ->
+            val ch = list[i]
+            deleted.remove(ch.key)
+            prefs.saveSet("deleted", deleted)
+            merge()
+            saveOrder()
+            toast("${ch.name} geri geldi, listenin sonunda")
+        })
     }
 
     fun requestLogo(ch: Channel) {
@@ -619,23 +737,31 @@ class AppState(val activity: MainActivity) {
         }
     }
 
+    /** Saves a logo off the main thread, then shows it everywhere, EYMEN OS home screen included. */
+    fun setLogo(ch: Channel, load: () -> Bitmap?) {
+        scope.launch {
+            val bmp = withContext(Dispatchers.IO) {
+                try {
+                    load()
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            if (bmp != null) onLogoReceived(ch, bmp) else toast("Logo yüklenemedi")
+        }
+    }
+
+    fun onLogoReceived(ch: Channel, bmp: Bitmap) {
+        ch.logo = bmp.asImageBitmap()
+        ch.logoRequested = true
+        writeSnapshot()
+        toast("${ch.name} logosu kaydedildi")
+    }
+
     fun pickLogo(ch: Channel) {
         activity.pickDocument(arrayOf("image/*")) { uri ->
             if (uri == null) return@pickDocument
-            scope.launch {
-                val bmp = withContext(Dispatchers.IO) {
-                    try {
-                        ctx.contentResolver.openInputStream(uri)?.use { Logos.saveCustom(ctx, ch.key, it) }
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
-                if (bmp != null) {
-                    ch.logo = bmp.asImageBitmap()
-                    ch.logoRequested = true
-                    toast("Kanal logosu kaydedildi")
-                } else toast("Logo yüklenemedi")
-            }
+            setLogo(ch) { ctx.contentResolver.openInputStream(uri)?.use { Logos.saveCustom(ctx, ch.key, it) } }
         }
     }
 
@@ -644,54 +770,73 @@ class AppState(val activity: MainActivity) {
         if (f.exists()) f.delete()
         ch.logo = null
         ch.logoRequested = false
+        writeSnapshot()
         toast("Varsayılan logoya dönüldü")
+    }
+
+    fun openLogoPicker(ch: Channel) {
+        startRemote()
+        pushDialog(Dialog.LogoPicker(ch, Logos.bundled(ctx, ch)))
+    }
+
+    fun closeLogoPicker(d: Dialog.LogoPicker) {
+        popDialog(d)
+        if (!remoteEnabled) stopRemote()
+    }
+
+    fun scanUsb(d: Dialog.LogoPicker) {
+        val perm = android.Manifest.permission.READ_EXTERNAL_STORAGE
+        if (Build.VERSION.SDK_INT <= 32 && ctx.checkSelfPermission(perm) != PackageManager.PERMISSION_GRANTED) {
+            activity.requestStorage { readUsb(d) }
+        } else {
+            readUsb(d)
+        }
+    }
+
+    private fun readUsb(d: Dialog.LogoPicker) {
+        scope.launch {
+            d.files = withContext(Dispatchers.IO) { UsbImages.scan() }
+            d.scanned = true
+        }
     }
 
     fun channelActions(ch: Channel) {
         val hiddenNow = isHidden(ch)
         val lockedNow = isLocked(ch)
         val fav = isFav(ch)
-        val labels = listOf(
-            "İzle",
-            "Yeniden adlandır",
-            "Kendi logomu seç (USB)",
-            "Özel logoyu kaldır",
-            "Kategori değiştir",
-            if (hiddenNow) "Listede göster" else "Listeden gizle",
-            if (lockedNow) "Kilidi aç" else "PIN ile kilitle",
-            "Sırasını değiştir",
-            if (fav) "Favorilerden çıkar" else "Favorilere ekle",
-            "Adı ve kategoriyi sıfırla"
-        )
+        val labels = ArrayList<String>()
+        val actions = ArrayList<() -> Unit>()
+        fun add(label: String, action: () -> Unit) {
+            labels.add(label)
+            actions.add(action)
+        }
+        add("İzle") {
+            moving = null
+            goLive()
+            play(ch)
+        }
+        add("Numara ver") { startMove(ch) }
+        add("Logo ekle") { openLogoPicker(ch) }
+        add("Yeniden adlandır") { rename(ch) }
+        add("Kategori değiştir") { chooseCategory(ch) }
+        add(if (hiddenNow) "Listede göster" else "Listeden gizle") {
+            setHidden(listOf(ch.key), !hiddenNow)
+            toast(if (hiddenNow) "${ch.name} yeniden listede" else "${ch.name} gizlendi")
+        }
+        add(if (lockedNow) "Kilidi aç" else "PIN ile kilitle") { toggleLock(ch) }
+        add(if (fav) "Favorilerden çıkar" else "Favorilere ekle") { toggleFavorite(ch) }
+        add("Kanalı sil") { confirmDelete(listOf(ch.key)) }
+        add("Özel logoyu kaldır") { resetLogo(ch) }
+        add("Adı ve kategoriyi sıfırla") {
+            prefs.setCustomName(ch.key, null)
+            prefs.setCustomCategory(ch.key, null)
+            ch.name = ch.originalName
+            ch.category = Names.category(ch.norm, ch.groupTitle, ch.isRadio)
+            toast("Ad ve kategori sıfırlandı")
+        }
+        if (trash.isNotEmpty()) add("Silinen kanallar (${trash.size})") { showTrash() }
         pushDialog(Dialog.Choice(ch.name, labels, "${ch.number} · ${ch.category} · ${ch.sourceLabel}") { i ->
-            when (i) {
-                0 -> {
-                    moving = null
-                    goLive()
-                    play(ch)
-                }
-                1 -> rename(ch)
-                2 -> pickLogo(ch)
-                3 -> resetLogo(ch)
-                4 -> chooseCategory(ch)
-                5 -> {
-                    setHidden(listOf(ch.key), !hiddenNow)
-                    toast(if (hiddenNow) "${ch.name} yeniden listede" else "${ch.name} gizlendi")
-                }
-                6 -> toggleLock(ch)
-                7 -> {
-                    moving = ch
-                    toast("▲▼ ile taşı, OK ile bırak")
-                }
-                8 -> toggleFavorite(ch)
-                9 -> {
-                    prefs.setCustomName(ch.key, null)
-                    prefs.setCustomCategory(ch.key, null)
-                    ch.name = ch.originalName
-                    ch.category = Names.category(ch.norm, ch.groupTitle, ch.isRadio)
-                    toast("Ad ve kategori sıfırlandı")
-                }
-            }
+            actions[i]()
         })
     }
 
@@ -878,6 +1023,10 @@ class AppState(val activity: MainActivity) {
             "epg" -> openEpg()
             "home" -> goHome()
             "settings" -> openSettings()
+            "channels" -> {
+                openSettings(0)
+                setInPane = true
+            }
         }
         return true
     }
@@ -891,6 +1040,8 @@ class AppState(val activity: MainActivity) {
             o.put("last", current?.key ?: prefs.lastChannel ?: "")
             o.put("updated", System.currentTimeMillis())
             val arr = JSONArray()
+            val ownLogos = (File(ctx.filesDir, "channel_logos").listFiles() ?: emptyArray())
+                .associate { it.name to it.lastModified() }
             for (c in visible().take(600)) {
                 val j = JSONObject()
                 j.put("key", c.key)
@@ -901,6 +1052,7 @@ class AppState(val activity: MainActivity) {
                 j.put("inputId", c.inputId ?: "")
                 j.put("url", c.streamUrl ?: c.web?.streamUrl ?: "")
                 j.put("logo", c.logoUrl ?: c.web?.logoUrl ?: "")
+                j.put("logoRev", ownLogos[Logos.customFile(ctx, c.key).name] ?: 0L)
                 j.put("fav", isFav(c))
                 j.put("category", c.category)
                 arr.put(j)
@@ -963,6 +1115,8 @@ class AppState(val activity: MainActivity) {
             val n = c.now
             if (n == null || n.end <= now) loadNowNext(c, false)
         }
+        val waiting = pendingNotice
+        if (waiting != null) offerUpdate(waiting)
     }
 
     // ---------------------------------------------------------------- programme guide
@@ -1200,6 +1354,7 @@ class AppState(val activity: MainActivity) {
                 loadAll(false)
                 toast("Kanallar yeniden okunuyor")
             },
+            SettingItem("Silinen kanallar", "${trash.size}") { showTrash() },
             SettingItem("Kanallar", "TV $tvCount · İnternet $webCount · Eşleşen $matchedCount", enabled = false)
         )
         6 -> if (reminders.isEmpty()) {
@@ -1235,7 +1390,10 @@ class AppState(val activity: MainActivity) {
     // ---------------------------------------------------------------- phone remote
 
     fun startRemote() {
-        if (remote != null) return
+        if (remote != null) {
+            if (remoteUrl == null) refreshRemoteUrl()
+            return
+        }
         var token = prefs.str("remoteToken", "")
         if (token.isEmpty()) {
             token = randomToken()
@@ -1258,6 +1416,16 @@ class AppState(val activity: MainActivity) {
                 return@launch
             }
             val url = "http://$ip:${r.port}/?t=$token"
+            remoteUrl = url
+            remoteQr = withContext(Dispatchers.Default) { RemoteServer.qr(url) }
+        }
+    }
+
+    private fun refreshRemoteUrl() {
+        val r = remote ?: return
+        scope.launch {
+            val ip = withContext(Dispatchers.IO) { RemoteServer.localIp() } ?: return@launch
+            val url = "http://$ip:${r.port}/?t=${prefs.str("remoteToken", "")}"
             remoteUrl = url
             remoteQr = withContext(Dispatchers.Default) { RemoteServer.qr(url) }
         }
@@ -1308,6 +1476,15 @@ class AppState(val activity: MainActivity) {
             arr.put(j)
         }
         return arr.toString()
+    }
+
+    fun remoteChannel(key: String): String {
+        val ch = all.firstOrNull { it.key == key } ?: return "{}"
+        val j = JSONObject()
+        j.put("key", ch.key)
+        j.put("number", ch.number)
+        j.put("name", ch.name)
+        return j.toString()
     }
 
     fun remoteTune(key: String) {
@@ -1380,6 +1557,79 @@ class AppState(val activity: MainActivity) {
     }
 
     // ---------------------------------------------------------------- updates
+
+    private fun watchNetwork() {
+        val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                handler.postDelayed({ autoCheck(false) }, 4000L)
+            }
+        }
+        try {
+            cm.registerDefaultNetworkCallback(callback)
+            networkCallback = callback
+        } catch (e: Exception) {
+        }
+    }
+
+    /** Runs when the TV comes online and every few hours: a newer version puts the notice on screen. */
+    fun autoCheck(force: Boolean) {
+        val t = System.currentTimeMillis()
+        if (!force && t - lastUpdateCheck < UPDATE_MIN_GAP) return
+        lastUpdateCheck = t
+        scope.launch {
+            val info = try {
+                withContext(Dispatchers.IO) { Updater.check() }
+            } catch (e: Exception) {
+                null
+            } ?: return@launch
+            if (Updater.newer(info.version, BuildConfig.VERSION_NAME)) {
+                updateInfo = info
+                updateStatus = "Yeni sürüm var: ${info.version}"
+                offerUpdate(info)
+            }
+        }
+    }
+
+    private fun offerUpdate(info: Updater.Info) {
+        if (screen == Screen.SPLASH || textInputActive() || dialogs.isNotEmpty()) {
+            pendingNotice = info
+            return
+        }
+        pendingNotice = null
+        val snoozed = prefs.str("updateSnoozed", "") == info.version &&
+            System.currentTimeMillis() < prefs.long("updateSnoozedUntil", 0L)
+        if (!snoozed) pushDialog(Dialog.UpdateNotice(info))
+    }
+
+    fun snoozeUpdate(info: Updater.Info) {
+        prefs.putStr("updateSnoozed", info.version)
+        prefs.putLong("updateSnoozedUntil", System.currentTimeMillis() + UPDATE_PERIOD)
+    }
+
+    /** EYMEN OS 1.1 and later install updates without a question, so the job goes there first. */
+    private fun osInstaller(): Boolean = try {
+        PackageInfoCompat.getLongVersionCode(ctx.packageManager.getPackageInfo(OS_PACKAGE, 0)) >= 6L
+    } catch (e: Exception) {
+        false
+    }
+
+    fun beginUpdate(info: Updater.Info) {
+        if (osInstaller()) {
+            try {
+                val i = Intent().setClassName(OS_PACKAGE, "$OS_PACKAGE.HomeActivity")
+                i.putExtra("guncelle", "uydu")
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                ctx.startActivity(i)
+                return
+            } catch (e: Exception) {
+            }
+        }
+        openSettings(7)
+        setInPane = true
+        setIndex = 1
+        installUpdate(info)
+    }
 
     fun checkUpdate() {
         updateStatus = "Denetleniyor…"
@@ -1458,6 +1708,13 @@ class AppState(val activity: MainActivity) {
     }
 
     fun onDestroy() {
+        try {
+            val callback = networkCallback
+            if (callback != null) {
+                (ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.unregisterNetworkCallback(callback)
+            }
+        } catch (e: Exception) {
+        }
         stopRemote()
         playback.release()
         handler.removeCallbacksAndMessages(null)
@@ -1466,6 +1723,9 @@ class AppState(val activity: MainActivity) {
 
     companion object {
         const val PERM_TV = "android.permission.READ_TV_LISTINGS"
+        const val OS_PACKAGE = "com.eymen.os"
+        const val UPDATE_PERIOD = 6 * 3600000L
+        const val UPDATE_MIN_GAP = 15 * 60000L
         const val DEFAULT_LIST_URL = "https://raw.githubusercontent.com/mmustafatasoy/EymenTv/main/channels/tr.m3u"
         const val EXTRA_CHANNEL_KEY = "channel_key"
         const val EXTRA_CHANNEL_NUMBER = "channel_number"

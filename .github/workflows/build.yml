@@ -2,7 +2,7 @@ name: EYMEN TV 2.0 — Derle, imzala, yayınla
 
 on:
   push:
-    branches: [main]
+    branches: [main, surum-2.3]
     paths:
       - 'app/**'
       - 'build.gradle.kts'
@@ -45,6 +45,7 @@ jobs:
           mkdir -p app/src/main/assets/fonts
           curl -fsSL -o app/src/main/assets/fonts/Sora.ttf "https://raw.githubusercontent.com/google/fonts/main/ofl/sora/Sora%5Bwght%5D.ttf" || echo "Sora indirilemedi, sistem yazı tipi kullanılacak"
           curl -fsSL -o app/src/main/assets/fonts/Manrope.ttf "https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/Manrope%5Bwght%5D.ttf" || echo "Manrope indirilemedi, sistem yazı tipi kullanılacak"
+          curl -fsSL -o app/src/main/assets/fonts/GreatVibes.ttf "https://raw.githubusercontent.com/google/fonts/main/ofl/greatvibes/GreatVibes-Regular.ttf" || echo "İmza yazı tipi indirilemedi, sistem el yazısı kullanılacak"
           ls -la app/src/main/assets/fonts
 
       - name: Hazır kanal listesini APK'ya koy
@@ -64,7 +65,7 @@ jobs:
 
       - name: GitHub Releases'a yayınla
         id: release
-        if: steps.build.outcome == 'success' && github.event_name != 'pull_request'
+        if: steps.build.outcome == 'success' && github.ref == 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -79,6 +80,11 @@ jobs:
           # EYMEN TV $VERSION
 
           v0.12 ve sonrası sürümlerin üzerine güncelleme olarak kurulur; gizlenen kanallar, favoriler, kanal adları ve özel logolar korunur.
+
+          **2.3 ile gelenler**
+          - Taşınan kanalın numarası artık sırasına göre değişir, numara yazarak da taşınır
+          - Kanal silme ve Silinen kanallar bölümünden geri getirme
+          - Kanala kendi logonu ekleme: telefondan, hazır listeden ya da USB'den
 
           **2.2 ile gelenler**
           - EYMEN Başlatıcı ana ekranında son izlenen kanal ve kanal listesi

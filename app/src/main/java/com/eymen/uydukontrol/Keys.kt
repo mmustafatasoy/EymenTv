@@ -233,7 +233,10 @@ private fun AppState.epgKey(code: Int): Boolean {
 private fun AppState.settingsKey(code: Int): Boolean {
     val mv = moving
     if (mv != null) {
+        val dg = digitOf(code)
         when {
+            dg >= 0 -> if (moveEntry.length < 4) moveEntry += dg.toString()
+            code == KeyEvent.KEYCODE_DEL -> moveEntry = moveEntry.dropLast(1)
             code == KeyEvent.KEYCODE_DPAD_UP -> {
                 moveChannel(mv, -1)
                 setIndex = all.indexOf(mv)
@@ -242,8 +245,17 @@ private fun AppState.settingsKey(code: Int): Boolean {
                 moveChannel(mv, 1)
                 setIndex = all.indexOf(mv)
             }
-            isOk(code) || isBack(code) -> {
-                moving = null
+            isOk(code) -> {
+                val n = moveEntry.toIntOrNull()
+                if (n != null && n > 0) {
+                    moveChannelTo(mv, n)
+                } else {
+                    finishMove()
+                    toast("Sıra kaydedildi")
+                }
+            }
+            isBack(code) -> {
+                finishMove()
                 toast("Sıra kaydedildi")
             }
         }
@@ -284,10 +296,11 @@ private fun AppState.settingsKey(code: Int): Boolean {
             code == KeyEvent.KEYCODE_PROG_RED -> bulkHideToggle()
             code == KeyEvent.KEYCODE_PROG_YELLOW -> {
                 val ch = list.getOrNull(setIndex)
-                if (ch != null) {
-                    moving = ch
-                    toast("▲▼ ile taşı, OK ile bırak")
-                }
+                if (ch != null) startMove(ch)
+            }
+            code == KeyEvent.KEYCODE_PROG_BLUE -> {
+                val keys = if (checked.isNotEmpty()) checked.toList() else listOfNotNull(list.getOrNull(setIndex)?.key)
+                confirmDelete(keys)
             }
             code == KeyEvent.KEYCODE_DPAD_LEFT || isBack(code) -> {
                 setInPane = false
@@ -356,7 +369,68 @@ private fun AppState.dialogKey(d: Dialog, code: Int) {
             }
         }
         is Dialog.Info -> if (isOk(code) || isBack(code)) popDialog(d)
+        is Dialog.UpdateNotice -> {
+            when {
+                code == KeyEvent.KEYCODE_DPAD_LEFT || code == KeyEvent.KEYCODE_DPAD_RIGHT -> d.index = 1 - d.index
+                isOk(code) -> {
+                    popDialog(d)
+                    if (d.index == 0) beginUpdate(d.info) else snoozeUpdate(d.info)
+                }
+                isBack(code) -> {
+                    popDialog(d)
+                    snoozeUpdate(d.info)
+                }
+            }
+        }
+        is Dialog.LogoPicker -> logoKey(d, code)
         is Dialog.TextInput -> if (isBack(code)) popDialog(d)
+    }
+}
+
+private fun AppState.logoKey(d: Dialog.LogoPicker, code: Int) {
+    val ch = d.channel
+    if (isBack(code)) {
+        closeLogoPicker(d)
+        return
+    }
+    if (code == KeyEvent.KEYCODE_PROG_RED) {
+        resetLogo(ch)
+        return
+    }
+    if (!d.inBody) {
+        when {
+            code == KeyEvent.KEYCODE_DPAD_LEFT -> d.tab = (d.tab + 2) % 3
+            code == KeyEvent.KEYCODE_DPAD_RIGHT -> d.tab = (d.tab + 1) % 3
+            code == KeyEvent.KEYCODE_DPAD_DOWN || isOk(code) -> if (d.tab != 0) {
+                d.inBody = true
+                d.index = 0
+            }
+        }
+        return
+    }
+    if (d.tab == 1) {
+        val n = d.names.size
+        when {
+            code == KeyEvent.KEYCODE_DPAD_LEFT -> if (d.index % 5 > 0) d.index -= 1
+            code == KeyEvent.KEYCODE_DPAD_RIGHT -> if (d.index % 5 < 4 && d.index < n - 1) d.index += 1
+            code == KeyEvent.KEYCODE_DPAD_UP -> if (d.index >= 5) d.index -= 5 else d.inBody = false
+            code == KeyEvent.KEYCODE_DPAD_DOWN -> d.index = min(d.index + 5, max(0, n - 1))
+            isOk(code) -> {
+                val name = d.names.getOrNull(d.index)
+                if (name != null) setLogo(ch) { Logos.saveAsset(ctx, ch.key, name) }
+            }
+        }
+    } else {
+        val n = d.files.size + 1
+        when {
+            code == KeyEvent.KEYCODE_DPAD_UP -> if (d.index > 0) d.index -= 1 else d.inBody = false
+            code == KeyEvent.KEYCODE_DPAD_DOWN -> if (d.index < n - 1) d.index += 1
+            isOk(code) -> {
+                val f = d.files.getOrNull(d.index)
+                if (f != null) setLogo(ch) { f.inputStream().use { Logos.saveCustom(ctx, ch.key, it) } }
+                else pickLogo(ch)
+            }
+        }
     }
 }
 

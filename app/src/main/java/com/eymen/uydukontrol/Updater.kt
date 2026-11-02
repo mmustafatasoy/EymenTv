@@ -12,7 +12,7 @@ import java.io.File
 object Updater {
     private const val LATEST = "https://api.github.com/repos/mmustafatasoy/EymenTv/releases/latest"
 
-    class Info(val version: String, val url: String)
+    class Info(val version: String, val url: String, val notes: List<String>)
 
     fun check(): Info? {
         val json = JSONObject(Http.text(LATEST))
@@ -30,8 +30,12 @@ object Updater {
         }
         val u = url ?: return null
         if (u.isEmpty()) return null
-        return Info(version, u)
+        return Info(version, u, notes(json.optString("body", "")))
     }
+
+    /** The first bullet lines of the release notes, shown on the update notice. */
+    private fun notes(body: String): List<String> =
+        body.lines().map { it.trim() }.filter { it.startsWith("- ") }.map { it.removePrefix("- ").trim() }.take(3)
 
     fun newer(candidate: String, installed: String): Boolean {
         val a = candidate.split('.').map { it.toIntOrNull() ?: 0 }

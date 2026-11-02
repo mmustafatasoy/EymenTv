@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
+import java.io.File
 
 enum class Source { TV, WEB }
 
@@ -34,7 +35,8 @@ class Channel(
     val logoUrl: String?,
     val groupTitle: String?
 ) {
-    var number: String = numRaw ?: ""
+    /** What the user sees and dials. Follows the user's own order once the list has been arranged. */
+    var number by mutableStateOf(numRaw ?: "")
     var name by mutableStateOf(originalName)
     var category by mutableStateOf("Genel")
     var logo by mutableStateOf<ImageBitmap?>(null)
@@ -105,6 +107,19 @@ sealed class Dialog {
     }
 
     class Info(val title: String, val message: String) : Dialog()
+
+    class UpdateNotice(val info: Updater.Info) : Dialog() {
+        var index by mutableStateOf(0)
+    }
+
+    class LogoPicker(val channel: Channel, val names: List<String>) : Dialog() {
+        var tab by mutableStateOf(0)
+        var inBody by mutableStateOf(false)
+        var index by mutableStateOf(0)
+        var files by mutableStateOf<List<File>>(emptyList())
+        var scanned by mutableStateOf(false)
+        var qr by mutableStateOf<ImageBitmap?>(null)
+    }
 }
 
 class EpgCache(val from: Long, val to: Long, val programs: List<Program>)
