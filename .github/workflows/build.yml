@@ -80,6 +80,9 @@ jobs:
 
           v0.12 ve sonrası sürümlerin üzerine güncelleme olarak kurulur; gizlenen kanallar, favoriler, kanal adları ve özel logolar korunur.
 
+          **2.2 ile gelenler**
+          - EYMEN Başlatıcı ana ekranında son izlenen kanal ve kanal listesi
+
           **2.1 ile gelenler**
           - Hazır internet kanal listesi: Türkiye'nin herkese açık ücretsiz yayınları, her gün GitHub'da denenir
           - Bu TV'de açılmayan internet kanalları otomatik gizlenir (Ayarlar › Kanal kaynakları)

@@ -222,6 +222,7 @@ class AppState(val activity: MainActivity) {
         tvCount = tv.size
         webCount = web.size
         matchedCount = matched
+        writeSnapshot()
         val cur = current
         if (cur != null) {
             val fresh = all.firstOrNull { it.key == cur.key }
@@ -304,6 +305,7 @@ class AppState(val activity: MainActivity) {
         playback.play(ch)
         loadNowNext(ch, true)
         if (withBanner) showBanner()
+        writeSnapshot()
     }
 
     fun zap(delta: Int) {
@@ -512,6 +514,7 @@ class AppState(val activity: MainActivity) {
         }
         prefs.saveSet("favorites", favorites)
         toast(if (added) "${ch.name} favorilere eklendi" else "${ch.name} favorilerden çıkarıldı")
+        writeSnapshot()
     }
 
     fun setHidden(keys: Collection<String>, hide: Boolean) {
@@ -521,6 +524,7 @@ class AppState(val activity: MainActivity) {
             } else hidden.remove(k)
         }
         prefs.saveSet("hidden", hidden)
+        writeSnapshot()
     }
 
     fun toggleLock(ch: Channel) {
@@ -876,6 +880,48 @@ class AppState(val activity: MainActivity) {
             "settings" -> openSettings()
         }
         return true
+    }
+
+    // ---------------------------------------------------------------- shared with EYMEN Başlatıcı
+
+    /** Writes the visible channel list and the last channel for EYMEN Başlatıcı (served by StateProvider). */
+    fun writeSnapshot() {
+        val o = JSONObject()
+        try {
+            o.put("last", current?.key ?: prefs.lastChannel ?: "")
+            o.put("updated", System.currentTimeMillis())
+            val arr = JSONArray()
+            for (c in visible().take(600)) {
+                val j = JSONObject()
+                j.put("key", c.key)
+                j.put("number", c.number)
+                j.put("name", c.name)
+                j.put("source", c.source.name)
+                j.put("tvId", c.tvId)
+                j.put("inputId", c.inputId ?: "")
+                j.put("url", c.streamUrl ?: c.web?.streamUrl ?: "")
+                j.put("logo", c.logoUrl ?: c.web?.logoUrl ?: "")
+                j.put("fav", isFav(c))
+                j.put("category", c.category)
+                arr.put(j)
+            }
+            o.put("channels", arr)
+        } catch (e: Exception) {
+            return
+        }
+        val text = o.toString()
+        scope.launch(Dispatchers.IO) {
+            try {
+                val f = File(ctx.filesDir, "launcher_state.json")
+                val tmp = File(ctx.filesDir, "launcher_state.json.tmp")
+                tmp.writeText(text)
+                if (!tmp.renameTo(f)) {
+                    f.writeText(text)
+                    tmp.delete()
+                }
+            } catch (e: Exception) {
+            }
+        }
     }
 
     // ---------------------------------------------------------------- reminders
