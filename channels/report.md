@@ -1,9 +1,9 @@
 # Kanal listesi raporu
 
-- Tarih: 2026-11-02 04:16 UTC
+- Tarih: 2026-11-03 04:09 UTC
 - Denenen yayın: 166
-- Listede: 129 kanal (121 çalışıyor, 8 Türkiye dışından kapalı, TV'de yeniden denenir)
-- Çalışmadığı için çıkarılan: 37
+- Listede: 127 kanal (119 çalışıyor, 8 Türkiye dışından kapalı, TV'de yeniden denenir)
+- Çalışmadığı için çıkarılan: 39
 
 ## Listedeki kanallar
 
@@ -11,7 +11,7 @@
 - Haber · 360 · çalışıyor
 - Haber · A Haber · çalışıyor
 - Haber · Almahriah TV · çalışıyor
-- Haber · AS TV · çalışıyor
+- Haber · AS TV (Turkiye) · çalışıyor
 - Haber · DHA · çalışıyor
 - Haber · Ekoturk · çalışıyor
 - Haber · Finans Turk TV · çalışıyor
@@ -67,7 +67,6 @@
 - Genel · Anadolu Net TV · çalışıyor
 - Genel · Aras TV · çalışıyor
 - Genel · ATV Alanya · çalışıyor
-- Genel · ATV Avrupa · çalışıyor
 - Genel · ATV (Turkiye) · çalışıyor
 - Genel · Bir TV · çalışıyor
 - Genel · Bloomberg HT · Türkiye dışından kapalı
@@ -94,9 +93,9 @@
 - Genel · Kanal D (Turkiye) · çalışıyor
 - Genel · Kanal Firat · çalışıyor
 - Genel · Kanal V · çalışıyor
+- Genel · Kay TV · çalışıyor
 - Genel · Kent Turk · çalışıyor
 - Genel · Kocaeli TV · çalışıyor
-- Genel · Konya Olay TV · çalışıyor
 - Genel · Luys TV · çalışıyor
 - Genel · MaviKaradeniz TV · çalışıyor
 - Genel · Meltem TV · çalışıyor
@@ -111,19 +110,18 @@
 - Genel · Star TV (Turkiye) · çalışıyor
 - Genel · Sun RTV · çalışıyor
 - Genel · TBMM TV · çalışıyor
-- Genel · Tele 1 · çalışıyor
 - Genel · Tempo TV · çalışıyor
 - Genel · TGRT Belgesel · çalışıyor
 - Genel · Tivi 6 · çalışıyor
 - Genel · Ton TV · çalışıyor
 - Genel · TRT 1 · çalışıyor
-- Genel · TRT 2 · Türkiye dışından kapalı
+- Genel · TRT 2 · çalışıyor
 - Genel · TRT 3 · çalışıyor
 - Genel · TRT Avaz · çalışıyor
 - Genel · TRT EBA · çalışıyor
 - Genel · TRT EBA Ilkokul · çalışıyor
 - Genel · TRT EBA Lise · çalışıyor
-- Genel · TRT Genc · çalışıyor
+- Genel · TRT Genc · Türkiye dışından kapalı
 - Genel · TRT Kurdi · çalışıyor
 - Genel · TRT Turk · çalışıyor
 - Genel · Turksat Tanitim · Türkiye dışından kapalı
@@ -141,6 +139,7 @@
 
 - Al-Rafidain TV · HTTP 502
 - Altas TV · URLError
+- ATV Avrupa · HTTP 503
 - Benguturk TV · URLError
 - Beyaz TV · RemoteDisconnected
 - Bursa TV · HTTP 404
@@ -159,7 +158,7 @@
 - Kanal 34 · URLError
 - Kanal 7 · URLError
 - Kanal Hayat · URLError
-- Kay TV · HTTP 404
+- Konya Olay TV · HTTP 404
 - Line TV · URLError
 - MovieSmart Turk · ConnectionResetError
 - MTurk TV · URLError
@@ -168,6 +167,7 @@
 - Qaf TV · HTTP 204 text/plain
 - Show Turk · HTTP 404
 - S Sport 2 · HTTP 400
+- Tele 1 · HTTP 404
 - TRT Spor · URLError
 - TurkHaber TV · URLError
 - TV 1 · URLError
