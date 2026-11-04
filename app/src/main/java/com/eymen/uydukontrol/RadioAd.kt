@@ -45,7 +45,8 @@ import kotlin.random.Random
  * Four scenes loop: brand + signature, services, "find us on Google", atasoyyazilim.com.
  * All drawing is on the 1280×720 design grid; 1.dp = one design pixel.
  */
-private const val DUR = 12f
+private const val SCENE = 5f          // her sahne 5 saniye (daha sakin akış)
+private const val DUR = SCENE * 4      // dört sahne
 private const val URL = "atasoyyazilim.com"
 
 private val QR = listOf(
@@ -92,9 +93,9 @@ private fun bounce(x: Float): Float {
         else -> { z -= 2.625f / d; n * z * z + 0.984375f }
     }
 }
-/** Cross-fade envelope for a 3-second scene starting at [start]. */
+/** Cross-fade envelope for a [SCENE]-second scene starting at [start]. */
 private fun sceneAlpha(t: Float, start: Float) =
-    cl(minOf(seg(t, start, start + 0.5f), 1f - seg(t, start + 2.5f, start + 3f)), 0f, 1f)
+    cl(minOf(seg(t, start, start + 0.6f), 1f - seg(t, start + SCENE - 0.6f, start + SCENE)), 0f, 1f)
 
 private class Particle(val x: Float, val y: Float, val r: Float, val sp: Float, val ph: Float)
 private class Confetti(val x: Float, val delay: Float, val rot: Float, val rs: Float, val color: Color)
@@ -126,7 +127,7 @@ fun RadioAd(app: AppState, ch: Channel) {
 
     Box(Modifier.fillMaxSize().background(Color(0xFF05080F))) {
         // animated background: glows, particles, waveform, confetti
-        val confVis = sceneAlpha(t, 9f)
+        val confVis = sceneAlpha(t, SCENE * 3)
         Canvas(Modifier.fillMaxSize()) { drawBackdrop(t, parts, conf, confVis) }
 
         // persistent radio chrome
@@ -143,12 +144,12 @@ fun RadioAd(app: AppState, ch: Channel) {
 
         // scenes
         SceneBox(sceneAlpha(t, 0f)) { SceneBrand(t) }
-        SceneBox(sceneAlpha(t, 3f)) { SceneServices(t - 3f, dens) }
-        SceneBox(sceneAlpha(t, 6f)) { SceneSearch(t - 6f, dens) }
-        SceneBox(sceneAlpha(t, 9f)) { SceneUrl(t - 9f, dens) }
+        SceneBox(sceneAlpha(t, SCENE)) { SceneServices(t - SCENE, dens) }
+        SceneBox(sceneAlpha(t, SCENE * 2)) { SceneSearch(t - SCENE * 2, dens) }
+        SceneBox(sceneAlpha(t, SCENE * 3)) { SceneUrl(t - SCENE * 3, dens) }
 
         // scene indicator dots
-        val sc = (t / 3f).toInt()
+        val sc = (t / SCENE).toInt().coerceIn(0, 3)
         Row(
             Modifier.align(Alignment.BottomCenter).padding(bottom = 86.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -407,7 +408,7 @@ private fun DrawScope.drawBackdrop(t: Float, parts: List<Particle>, conf: List<C
     val bw = (right - left - gap * (bars - 1)) / bars
     val baseY = h - 46f * (h / 720f)
     for (i in 0 until bars) {
-        val bh = (18f + 40f * abs(sin(t * 3f + i * 0.5f)) * abs(cos(t * 1.7f + i * 0.3f)) + 8f * sin(t * 5f + i)) * (h / 720f)
+        val bh = (18f + 40f * abs(sin(t * 1.6f + i * 0.5f)) * abs(cos(t * 0.9f + i * 0.3f)) + 8f * sin(t * 2.6f + i)) * (h / 720f)
         val x = left + i * (bw + gap)
         drawRect(
             Brush.verticalGradient(listOf(Color(0xFFF4D79E), Color(0xFF8A6A34)), startY = baseY - bh, endY = baseY),
@@ -417,7 +418,7 @@ private fun DrawScope.drawBackdrop(t: Float, parts: List<Particle>, conf: List<C
 
     // confetti (scene D only)
     if (confVis > 0.02f) {
-        val d = (t - 9f)
+        val d = (t - SCENE * 3)
         for (c in conf) {
             val p = cl((d - c.delay) / 2.6f, 0f, 1f)
             if (p <= 0f || p >= 1f) continue

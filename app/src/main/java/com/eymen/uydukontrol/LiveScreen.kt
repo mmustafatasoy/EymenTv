@@ -81,12 +81,15 @@ fun LiveLayer(app: AppState) {
                 T(app.digits, 44, C.Fg, 600, display = true)
             }
         }
+
+        BottomAd(app, Modifier.align(Alignment.BottomCenter))
     }
 }
 
 @Composable
 private fun StatusCard(app: AppState) {
     val pb = app.playback
+    if (app.current?.isRadio == true) return
     val message: String? = when {
         app.loadError != null && app.current == null -> app.loadError
         app.loading && app.current == null -> "Kanallar yükleniyor…"

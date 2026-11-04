@@ -88,6 +88,9 @@ class AppState(val activity: MainActivity) {
     val dialogs = mutableStateListOf<Dialog>()
     var now by mutableStateOf(System.currentTimeMillis())
 
+    /** When the bottom promo strip may next play (set lazily; survives screen changes). */
+    var bottomAdNextAt = 0L
+
     // Settings values
     var showLogos by mutableStateOf(prefs.bool("channelLogos", true))
     var showWatermark by mutableStateOf(prefs.bool("showWatermark", true))

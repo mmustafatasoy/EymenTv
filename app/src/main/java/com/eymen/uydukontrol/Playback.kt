@@ -120,6 +120,11 @@ class Playback(private val ctx: Context, private val app: AppState) {
             override fun onVideoUnavailable(inputId: String?, reason: Int) {
                 if (token != epoch) return
                 videoAvailable = false
+                if (ch.isRadio) {
+                    // Radio has no picture by design; the on-screen ad fills the frame.
+                    status = ""
+                    return
+                }
                 if (!fallbackActive) {
                     status = when (reason) {
                         TvInputManager.VIDEO_UNAVAILABLE_REASON_TUNING -> "Kanal ayarlanıyor…"

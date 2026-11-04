@@ -81,6 +81,11 @@ jobs:
 
           v0.12 ve sonrası sürümlerin üzerine güncelleme olarak kurulur; gizlenen kanallar, favoriler, kanal adları ve özel logolar korunur.
 
+          **2.5 ile gelenler**
+          - Radyo kanallarında "Uydu sinyali yok" yazısı kaldırıldı; ekranı tanıtım kaplıyor
+          - Radyo tanıtımı daha sakin ve yavaş akıyor
+          - Alt reklam bandı: ekranın altında saatte bir, sessizce atasoyyazilim.com tanıtımı
+
           **2.4 ile gelenler**
           - Radyo kanallarında ekran artık boş kalmıyor: hareketli atasoyyazilim.com tanıtımı
           - Dört sahne döner: logo ve imza, hizmetler, "bizi nasıl bulursunuz", düşen harflerle site adı ve QR kod
