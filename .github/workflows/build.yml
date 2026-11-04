@@ -81,6 +81,11 @@ jobs:
 
           v0.12 ve sonrası sürümlerin üzerine güncelleme olarak kurulur; gizlenen kanallar, favoriler, kanal adları ve özel logolar korunur.
 
+          **2.4 ile gelenler**
+          - Radyo kanallarında ekran artık boş kalmıyor: hareketli atasoyyazilim.com tanıtımı
+          - Dört sahne döner: logo ve imza, hizmetler, "bizi nasıl bulursunuz", düşen harflerle site adı ve QR kod
+          - Telefonla okutulan QR ile doğrudan siteye gidiş; altta müzikle oynayan ses dalgası
+
           **2.3 ile gelenler**
           - Taşınan kanalın numarası artık sırasına göre değişir, numara yazarak da taşınır
           - Kanal silme ve Silinen kanallar bölümünden geri getirme

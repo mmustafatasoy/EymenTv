@@ -36,9 +36,11 @@ import kotlin.math.max
 fun LiveLayer(app: AppState) {
     val ch = app.current
     Box(Modifier.fillMaxSize()) {
+        if (ch != null && ch.isRadio && !app.guideOpen) RadioAd(app, ch)
+
         StatusCard(app)
 
-        if (ch != null && app.showWatermark && !app.guideOpen) {
+        if (ch != null && !ch.isRadio && app.showWatermark && !app.guideOpen) {
             Row(
                 Modifier.align(Alignment.TopEnd).padding(top = 36.dp, end = 64.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),

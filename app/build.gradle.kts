@@ -12,8 +12,8 @@ android {
         applicationId = "com.eymen.uydukontrol"
         minSdk = 26
         targetSdk = 34
-        versionCode = 23
-        versionName = "2.3"
+        versionCode = 24
+        versionName = "2.4"
     }
 
     signingConfigs {
