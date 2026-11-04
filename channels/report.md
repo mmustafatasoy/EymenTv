@@ -1,9 +1,9 @@
 # Kanal listesi raporu
 
-- Tarih: 2026-11-03 04:09 UTC
+- Tarih: 2026-11-04 04:13 UTC
 - Denenen yayın: 166
-- Listede: 127 kanal (119 çalışıyor, 8 Türkiye dışından kapalı, TV'de yeniden denenir)
-- Çalışmadığı için çıkarılan: 39
+- Listede: 128 kanal (119 çalışıyor, 9 Türkiye dışından kapalı, TV'de yeniden denenir)
+- Çalışmadığı için çıkarılan: 38
 
 ## Listedeki kanallar
 
@@ -96,6 +96,7 @@
 - Genel · Kay TV · çalışıyor
 - Genel · Kent Turk · çalışıyor
 - Genel · Kocaeli TV · çalışıyor
+- Genel · Konya Olay TV · çalışıyor
 - Genel · Luys TV · çalışıyor
 - Genel · MaviKaradeniz TV · çalışıyor
 - Genel · Meltem TV · çalışıyor
@@ -115,7 +116,7 @@
 - Genel · Tivi 6 · çalışıyor
 - Genel · Ton TV · çalışıyor
 - Genel · TRT 1 · çalışıyor
-- Genel · TRT 2 · çalışıyor
+- Genel · TRT 2 · Türkiye dışından kapalı
 - Genel · TRT 3 · çalışıyor
 - Genel · TRT Avaz · çalışıyor
 - Genel · TRT EBA · çalışıyor
@@ -158,9 +159,8 @@
 - Kanal 34 · URLError
 - Kanal 7 · URLError
 - Kanal Hayat · URLError
-- Konya Olay TV · HTTP 404
 - Line TV · URLError
-- MovieSmart Turk · ConnectionResetError
+- MovieSmart Turk · HTTP 512
 - MTurk TV · URLError
 - Natural TV · URLError
 - On4 TV · URLError
