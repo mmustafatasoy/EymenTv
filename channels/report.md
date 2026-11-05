@@ -1,8 +1,8 @@
 # Kanal listesi raporu
 
-- Tarih: 2026-11-04 04:13 UTC
+- Tarih: 2026-11-05 04:13 UTC
 - Denenen yayın: 166
-- Listede: 128 kanal (119 çalışıyor, 9 Türkiye dışından kapalı, TV'de yeniden denenir)
+- Listede: 128 kanal (121 çalışıyor, 7 Türkiye dışından kapalı, TV'de yeniden denenir)
 - Çalışmadığı için çıkarılan: 38
 
 ## Listedeki kanallar
@@ -116,13 +116,13 @@
 - Genel · Tivi 6 · çalışıyor
 - Genel · Ton TV · çalışıyor
 - Genel · TRT 1 · çalışıyor
-- Genel · TRT 2 · Türkiye dışından kapalı
+- Genel · TRT 2 · çalışıyor
 - Genel · TRT 3 · çalışıyor
 - Genel · TRT Avaz · çalışıyor
 - Genel · TRT EBA · çalışıyor
 - Genel · TRT EBA Ilkokul · çalışıyor
 - Genel · TRT EBA Lise · çalışıyor
-- Genel · TRT Genc · Türkiye dışından kapalı
+- Genel · TRT Genc · çalışıyor
 - Genel · TRT Kurdi · çalışıyor
 - Genel · TRT Turk · çalışıyor
 - Genel · Turksat Tanitim · Türkiye dışından kapalı
@@ -160,7 +160,7 @@
 - Kanal 7 · URLError
 - Kanal Hayat · URLError
 - Line TV · URLError
-- MovieSmart Turk · HTTP 512
+- MovieSmart Turk · ConnectionResetError
 - MTurk TV · URLError
 - Natural TV · URLError
 - On4 TV · URLError
