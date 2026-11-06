@@ -1,8 +1,8 @@
 # Kanal listesi raporu
 
-- Tarih: 2026-11-05 04:13 UTC
-- Denenen yayın: 166
-- Listede: 128 kanal (121 çalışıyor, 7 Türkiye dışından kapalı, TV'de yeniden denenir)
+- Tarih: 2026-11-06 04:11 UTC
+- Denenen yayın: 167
+- Listede: 129 kanal (122 çalışıyor, 7 Türkiye dışından kapalı, TV'de yeniden denenir)
 - Çalışmadığı için çıkarılan: 38
 
 ## Listedeki kanallar
@@ -60,6 +60,7 @@
 - Dini · Dost TV · çalışıyor
 - Dini · Lalegul TV · çalışıyor
 - Dini · Sercem TV · çalışıyor
+- Dini · Thaqalayn TV · çalışıyor
 - Genel · 4U TV · çalışıyor
 - Genel · A2TV · çalışıyor
 - Genel · Aksu TV · çalışıyor
@@ -69,7 +70,7 @@
 - Genel · ATV Alanya · çalışıyor
 - Genel · ATV (Turkiye) · çalışıyor
 - Genel · Bir TV · çalışıyor
-- Genel · Bloomberg HT · Türkiye dışından kapalı
+- Genel · Bloomberg HT · çalışıyor
 - Genel · Bric ve Satranc TV · çalışıyor
 - Genel · BRTV (Turkiye) · çalışıyor
 - Genel · Ciftci TV · çalışıyor
@@ -122,7 +123,7 @@
 - Genel · TRT EBA · çalışıyor
 - Genel · TRT EBA Ilkokul · çalışıyor
 - Genel · TRT EBA Lise · çalışıyor
-- Genel · TRT Genc · çalışıyor
+- Genel · TRT Genc · Türkiye dışından kapalı
 - Genel · TRT Kurdi · çalışıyor
 - Genel · TRT Turk · çalışıyor
 - Genel · Turksat Tanitim · Türkiye dışından kapalı
