@@ -1,6 +1,6 @@
 # Kanal listesi raporu
 
-- Tarih: 2026-11-06 04:11 UTC
+- Tarih: 2026-11-07 04:07 UTC
 - Denenen yayın: 167
 - Listede: 129 kanal (122 çalışıyor, 7 Türkiye dışından kapalı, TV'de yeniden denenir)
 - Çalışmadığı için çıkarılan: 38
